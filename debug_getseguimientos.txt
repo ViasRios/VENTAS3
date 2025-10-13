@@ -1,0 +1,32 @@
+[2025-10-03 00:53:20] Archivo ejecutado
+[2025-10-03 00:53:20] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:22] Archivo ejecutado
+[2025-10-03 00:53:22] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:22] Archivo ejecutado
+[2025-10-03 00:53:22] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:22] Archivo ejecutado
+[2025-10-03 00:53:22] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:22] Archivo ejecutado
+[2025-10-03 00:53:22] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:22] Archivo ejecutado
+[2025-10-03 00:53:22] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:22] Archivo ejecutado
+[2025-10-03 00:53:22] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:23] Archivo ejecutado
+[2025-10-03 00:53:23] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:23] Archivo ejecutado
+[2025-10-03 00:53:23] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:24] Archivo ejecutado
+[2025-10-03 00:53:24] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:24] Archivo ejecutado
+[2025-10-03 00:53:24] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:24] Archivo ejecutado
+[2025-10-03 00:53:24] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:25] Archivo ejecutado
+[2025-10-03 00:53:25] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:37] Archivo ejecutado
+[2025-10-03 00:53:37] Error: Archivo config.php no encontrado
+[2025-10-03 00:53:40] Archivo ejecutado
+[2025-10-03 00:53:40] Error: Archivo config.php no encontrado
+[2025-10-03 00:55:05] Archivo ejecutado
+[2025-10-03 00:55:05] Error: Archivo config.php no encontrado

@@ -1,0 +1,11 @@
+RewriteEngine On
+Options All -Indexes
+
+# Excluir cualquier archivo .php de la reescritura
+RewriteCond %{REQUEST_URI} !\.php$
+
+# Excluir específicamente login_verificacion.php de la reescritura
+RewriteCond %{REQUEST_URI} !^/app/views/content/login_verificacion.php$
+
+# Redirigir el resto de las URLs amigables
+RewriteRule ^([a-zA-Z0-9/ñÑ-]+)/?$ index.php?views=$1 [QSA,L]

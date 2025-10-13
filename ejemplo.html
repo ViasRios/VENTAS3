@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Servicio</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f5f7f9;
+            color: #333;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 21cm; /* Tamaño carta */
+            min-height: 29.7cm;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 0.5cm;
+        }
+        .header {
+            background: linear-gradient(to right, #0d476a, #1887cb);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .company-info {
+            flex: 2;
+        }
+        .company-info h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        .company-info p {
+            font-size: 12px;
+            margin: 2px 0;
+        }
+        .logo {
+            flex: 1;
+            text-align: right;
+        }
+        .logo-placeholder {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .document-title {
+            background-color: #1887cb;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .section {
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+        .section-title {
+            background-color: #0d476a;
+            color: white;
+            padding: 6px 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        .section-title i {
+            margin-right: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        th {
+            background-color: #e8f4ff;
+            color: #0d476a;
+            text-align: left;
+            padding: 8px;
+            border-bottom: 2px solid #1887cb;
+            font-size: 12px;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 12px;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 60px;
+            font-size: 12px;
+        }
+        .totals {
+            background-color: #e8f4ff;
+            padding: 12px;
+            border-radius: 4px;
+            border-left: 4px solid #1887cb;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        .grand-total {
+            font-weight: bold;
+            font-size: 16px;
+            color: #0d476a;
+            border-bottom: none;
+            margin-top: 5px;
+        }
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #ddd;
+            font-size: 12px;
+        }
+        .signature-box {
+            width: 45%;
+        }
+        .signature-line {
+            height: 1px;
+            background-color: #333;
+            margin: 30px 0 5px 0;
+        }
+        .footer {
+            background-color: #0d476a;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 10px;
+            margin-top: 20px;
+        }
+        .highlight-green {
+            background-color: rgba(76, 175, 80, 0.15);
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: #2e7d32;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .status-pending {
+            background-color: #FFC107;
+            color: #7d6608;
+        }
+        .status-completed {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-print {
+            background-color: #1887cb;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+            width: 100%;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+        .btn-print:hover {
+            background-color: #0d476a;
+        }
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+                width: 21cm;
+                height: 29.7cm;
+            }
+            .container {
+                box-shadow: none;
+                width: 21cm;
+                min-height: 29.7cm;
+                padding: 0.5cm;
+            }
+            .btn-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="company-info">
+                <h2>KASCOM</h2>
+                <p>Xicoténcatl, No. 110</p>
+                <p>Col. Centro Pachuca de Soto</p>
+                <p>Tel: 771-402-02-58 | info@kascom.com</p>
+                <p>Lunes-Viernes: 10:00-19:00 || Sábado: 10:00-17:00</p>
+            </div>
+            <div class="logo">
+                <img src="/VENTAS3/foto_ods/Kascom.jpg" style="max-width:150px; height:auto;">
+            </div>
+        </div>
+
+        <div class="document-title">Orden de Servicio</div>
+        <div class="content">
+            <div class="section">
+                <div class="section-title">
+                    <i>📋</i> Información del Cliente y Equipo
+                </div>
+                <table>
+                    <tr>
+                        <th width="30%">Cliente</th>
+                        <th width="25%">Fecha de Ingreso</th>
+                        <th width="25%">N° de Orden</th>
+                        <th width="20%">Estado</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>Nombre:</strong> Juan Pérez<br>
+                            <strong>Teléfono:</strong> 555-9876<br>
+                            <strong>Email:</strong> juan@email.com
+                        </td>
+                        <td>25/05/2023</td>
+                        <td>TS-2023-0875</td>
+                        <td><span class="status-badge status-completed">COMPLETADO</span></td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr>
+                        <th width="25%">Tipo de Equipo</th>
+                        <th width="35%">Marca/Modelo</th>
+                        <th width="25%">N° Serie</th>
+                        <th width="15%">Garantía</th>
+                    </tr>
+                    <tr>
+                        <td>Laptop</td>
+                        <td>Dell Inspiron 15 5000</td>
+                        <td>SN-9876543210</td>
+                        <td class="highlight-green">Sí (90 días)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <i>🔍</i> Descripción del Problema
+                </div>
+                <textarea>El equipo no enciende. El cliente reporta que después de una actualización de sistema, la laptop comenzó a funcionar muy lenta y luego dejó de encender por completo. Se observa un LED de alimentación parpadeante en color ámbar.</textarea>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <i>🔧</i> Diagnóstico y Trabajo Realizado
+                </div>
+                <textarea>Se realizó diagnóstico hardware: falla en módulo de memoria RAM. Se reemplazó módulo defectuoso y se realizó limpieza interna completa. Se reinstaló sistema operativo y controladores. Pruebas de estrés exitosas.</textarea>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <i>⏱️</i> Servicios Realizados
+                </div>
+                <table>
+                    <tr>
+                        <th width="60%">Descripción del Servicio</th>
+                        <th width="15%">Horas</th>
+                        <th width="15%">Tarifa</th>
+                        <th width="20%">Importe</th>
+                    </tr>
+                    <tr>
+                        <td>Diagnóstico inicial</td>
+                        <td>1.0</td>
+                        <td>$30.00</td>
+                        <td>$30.00</td>
+                    </tr>
+                    <tr>
+                        <td>Limpieza interna y mantenimiento</td>
+                        <td>0.5</td>
+                        <td>$25.00</td>
+                        <td>$12.50</td>
+                    </tr>
+                    <tr>
+                        <td>Reemplazo de componente</td>
+                        <td>1.5</td>
+                        <td>$35.00</td>
+                        <td>$52.50</td>
+                    </tr>
+                    <tr>
+                        <td>Instalación de software</td>
+                        <td>0.75</td>
+                        <td>$25.00</td>
+                        <td>$18.75</td>
+                    </tr>
+                    <tr>
+                        <td>Configuración del sistema</td>
+                        <td>0.5</td>
+                        <td>$25.00</td>
+                        <td>$12.50</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL SERVICIOS</td>
+                        <td style="font-weight: bold;">$126.25</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="totals">
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>$126.25</span>
+                </div>
+                <div class="total-row">
+                    <span>IVA (16%):</span>
+                    <span>$20.20</span>
+                </div>
+                <div class="total-row">
+                    <span>Descuento:</span>
+                    <span class="highlight-green">-$10.00</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>TOTAL:</span>
+                    <span>$136.45</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <i>📝</i> Observaciones y Garantía
+                </div>
+                <textarea>El equipo fue reparado exitosamente. Se recomienda no instalar software no verificado y realizar mantenimiento preventivo cada 6 meses. La garantía cubre mano de obra por 90 días, excepto daños físicos o por mal uso.</textarea>
+            </div>
+
+            <div class="signature-area">
+                <div class="signature-box">
+                    <p><strong>Técnico Responsable:</strong> Carlos Rodríguez</p>
+                    <p><strong>Fecha de Reparación:</strong> 27/05/2023</p>
+                    <div class="signature-line"></div>
+                    <p>Firma del Técnico</p>
+                </div>
+                <div class="signature-box">
+                    <p><strong>Recibi Conforme:</strong></p>
+                    <p><strong>Fecha de Entrega:</strong> 28/05/2023</p>
+                    <div class="signature-line"></div>
+                    <p>Firma del Cliente</p>
+                </div>
+            </div>
+
+            <button class="btn-print" onclick="window.print()">Imprimir Orden de Servicio</button>
+        </div>
+    </div>
+</body>
+</html>

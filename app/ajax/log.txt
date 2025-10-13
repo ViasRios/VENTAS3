@@ -1,0 +1,407 @@
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => LEntregar
+    [destinatarios] => Array
+        (
+            [0] => 36
+            [1] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 36
+            [1] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Entregado
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 36
+            [1] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Entregado
+    [destinatarios] => Array
+        (
+            [0] => 36
+            [1] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Reparacion
+    [destinatarios] => Array
+        (
+            [0] => 36
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 36
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => LEntregar
+    [destinatarios] => Array
+        (
+            [0] => 36
+            [1] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => LEntregar
+    [destinatarios] => Array
+        (
+            [0] => 36
+            [1] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7037
+    [nuevo_status] => LEntregar
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7038
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => LEntregar
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 36
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => LEntregar
+    [destinatarios] => Array
+        (
+            [0] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7037
+    [nuevo_status] => Reparacion
+    [destinatarios] => Array
+        (
+            [0] => 36
+            [1] => 37
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 7036
+    [nuevo_status] => Reparacion
+    [destinatarios] => Array
+        (
+            [0] => 36
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 17013
+    [nuevo_status] => Precliente
+    [destinatarios] => Array
+        (
+            [0] => 36
+        )
+
+)
+
+SESSION:
+Array
+(
+    [id] => 36
+    [nombre] => Prueba
+    [usuario] => prueba123
+    [foto] => 
+)
+POST:
+Array
+(
+    [Idods] => 17030
+    [nuevo_status] => Reparacion
+    [destinatarios] => Array
+        (
+            [0] => 36
+        )
+
+)
+
+SESSION:
+Array
+(
+)
