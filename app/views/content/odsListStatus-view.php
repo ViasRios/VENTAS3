@@ -79,7 +79,7 @@ $ods_lista = $consulta->fetchAll();
                         <th>Tipo</th>
                         <th>Asesor</th>
                       <!--  <th>Status</th> -->
-                        <th>Tiempo</th>
+                      <!--  <th>Tiempo</th> -->
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -134,7 +134,7 @@ $ods_lista = $consulta->fetchAll();
                             <td><?php echo $od['Tipo']; ?></td>
                             <td><?php echo $od['NombreTecnico']; ?></td>
                         <!--    <td><?php echo $od['Status']; ?></td> -->
-                            <td>
+                        <!--    <td>
                                 <?php
                                     $tiempoODS = new DateTime($od['Tiempo']);
                                     $ahora = new DateTime();
@@ -156,7 +156,7 @@ $ods_lista = $consulta->fetchAll();
                                         echo 'Justo ahora';
                                     }
                                 ?>
-                            </td>
+                            </td> -->
                             <td>
                                 <a href="<?php echo APP_URL; ?>odsUpdate/<?php echo $od['Idods']; ?>/" class="button is-small is-info" title="Editar">
                                     <i class="fas fa-edit"></i>
@@ -671,5 +671,78 @@ document.addEventListener('DOMContentLoaded', function(){
     group.querySelectorAll('.button').forEach(b => b.classList.remove('is-active'));
     btn.classList.add('is-active');
   });
+});
+</script>
+
+<script>
+document.addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('.seguimientoBtn');
+  if (!btn) return;
+
+  const odsId = btn.getAttribute('data-ods-id');
+  if (!odsId) return;
+
+  // Evita doble envío
+  if (btn.classList.contains('is-loading') || btn.disabled) return;
+
+  btn.classList.add('is-loading');
+
+  try {
+    // Construye el payload (agrega tu token CSRF si usas uno)
+    const fd = new FormData();
+    fd.append('odsId', odsId);
+
+    const res = await fetch('<?= APP_URL; ?>enviarCorreoSeguimiento.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin'
+    });
+
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); } catch(e) { data = { ok:false, msg:'Respuesta no válida: ' + raw }; }
+
+    if (data.ok) {
+      // Cambia el icono a "sobre abierto" y desactiva el botón
+      btn.innerHTML = '<i class="fas fa-envelope-open"></i> Enviado';
+      btn.classList.remove('is-info');
+      btn.classList.add('is-light');
+      btn.disabled = true;
+      btn.title = 'Correo enviado';
+
+      // Marca visualmente la fila y actualiza estado a "Entregado"
+      const tr = btn.closest('tr');
+      if (tr) {
+        tr.dataset.status = 'Entregado'; // útil para filtros
+        // Si tu tabla NO muestra la columna Status, al menos marca algo:
+        tr.classList.add('has-background-success-light');
+
+        // Si estás en la vista filtrada por "Seguimiento", quita la fila
+        // (este listado llega por URL con $status="Seguimiento")
+        <?php if ($status === 'Seguimiento'): ?>
+        setTimeout(() => { 
+          tr.style.transition = 'opacity .25s';
+          tr.style.opacity = '0';
+          setTimeout(() => tr.remove(), 250);
+        }, 350);
+        <?php endif; ?>
+      }
+
+      // Mensaje rápido (opcional)
+      if (window.bulmaToast) {
+        bulmaToast.toast({ message: 'Correo enviado y ODS marcada como Entregado ✓', type: 'is-success' });
+      } else {
+        console.log('Correo enviado y ODS marcada como Entregado ✓');
+      }
+    } else {
+      alert(data.msg || 'No se pudo enviar el correo.');
+      console.error(data);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error de red/servidor al enviar el correo.');
+  } finally {
+    btn.classList.remove('is-loading');
+  }
 });
 </script>
