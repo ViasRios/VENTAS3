@@ -3,7 +3,7 @@
 SISTEMA de VENTAS BASICO desarrollado en PHP, MySQL, MVC, AJAX &amp; BULMA
 
 # ▶️ INSTALACIÓN
-<p>1 - Copie o mueva la carpeta VENTAS a su servidor local o remoto</p>
+<p>1 - Copie o mueva la carpeta VENTAS3 a su servidor local o remoto</p>
 <p>2 - Cree una base de datos en MYSQL con el nombre de su preferencia, 
 selecciónela e importe la base de datos del sistema con phpmyadmin u otro gestor grafico de MYSQL que utilice, la base de datos se encuentra en la carpeta DB</p>
 <p>3 - Abra el archivo server.php con su editor de código favorito y configure solamente los datos del servidor. El archivo se encuentra en la carpeta “config”</p>
