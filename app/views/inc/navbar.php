@@ -5,12 +5,14 @@
             <ul class="list-unstyle">
 
                 <li class="noLink">
-                    <form id="search-redirect-form">
+                    <form class="FormularioAjax no-confirm" action="<?php echo APP_URL; ?>app/ajax/buscadorAjax.php" method="POST" autocomplete="off">
+                        <input type="hidden" name="modulo_buscador" value="buscar">
+                        <input type="hidden" name="modulo_url" value="odsSearch">
+
                         <div class="search-box">
-                            <input class="search-input" type="text" id="search-redirect-input" placeholder="Ir a ODS por ID..." required>
-                            
+                            <input class="search-input" type="text" name="txt_buscador" placeholder="Buscar ODS por ID o Cliente..." required>
                             <button type="submit" class="search-btn">
-                                <i class="fas fa-arrow-right"></i>
+                                <i class="fas fa-search"></i>
                             </button>
                         </div>
                     </form>
@@ -90,24 +92,5 @@
 }
 </style>
 
-<script>
-// Espera a que el formulario con el ID 'search-redirect-form' sea enviado (al presionar Enter o el botón)
-document.getElementById('search-redirect-form').addEventListener('submit', function(event) {
-    
-    // 1. Previene que la página se recargue y envíe datos a un archivo
-    event.preventDefault();
-
-    // 2. Obtiene el valor (el ID) que el usuario escribió en el campo de texto
-    const odsId = document.getElementById('search-redirect-input').value;
-
-    // 3. Construye la URL de destino usando la variable APP_URL de PHP
-    //    Esto hace que tu código funcione sin importar si está en localhost o en un servidor real
-    const baseUrl = '<?php echo rtrim(APP_URL, "/"); ?>';
-    const newUrl = baseUrl + '/odsView/' + odsId + '/';
-
-    // 4. Redirige el navegador a la nueva URL
-    window.open(newUrl);
-});
-</script>
 </body>
 </html>

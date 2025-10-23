@@ -4,78 +4,66 @@ if (savedSessionId) {
     document.cookie = `PHPSESSID=${savedSessionId}; path=/`;
 }
 
-
-/* Enviar formularios via AJAX (único handler) */
+/* Enviar formularios via AJAX (CORREGIDO) */
 document.querySelectorAll(".FormularioAjax").forEach(formulario => {
-  formulario.addEventListener("submit", function(e) {
-    e.preventDefault();  // Previene el envío por defecto del formulario
+    formulario.addEventListener("submit", function(e) {
+        e.preventDefault(); // Previene el envío por defecto del formulario
 
-    // Evita doble submit en el mismo formulario
-    if (this.dataset.sending === '1') return;
+        if (this.dataset.sending === '1') return;
 
-    // Verifica si el formulario tiene la clase "no-sweetalert"
-    if (!this.classList.contains('no-sweetalert')) {
-      // Si NO tiene la clase "no-sweetalert", mostramos SweetAlert
-      Swal.fire({
-        title: '¿Estás seguro?',
-        text: "Quieres realizar la acción solicitada",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, realizar',
-        cancelButtonText: 'No, cancelar'
-      }).then((result) => {
-        if (!result.isConfirmed) return;
+        // Función para enviar los datos del formulario via AJAX
+        const sendFormData = () => {
+            this.dataset.sending = '1';
+            const data = new FormData(formulario);
+            const method = formulario.getAttribute("method") || 'POST';
+            const action = formulario.getAttribute("action");
 
-        this.dataset.sending = '1';  // Evita enviar el formulario más de una vez
-        sendFormData();
-      });
-    } else {
-      // Si tiene la clase "no-sweetalert", directamente envía los datos sin mostrar SweetAlert
-      this.dataset.sending = '1';  // Evita enviar el formulario más de una vez
-      sendFormData();
-    }
+            fetch(action, {
+                method,
+                body: data,
+                credentials: 'include',
+                cache: 'no-cache'
+            })
+            .then(respuesta => {
+                if (!respuesta.ok) throw new Error(`Error HTTP ${respuesta.status}`);
+                return respuesta.json().catch(() => { throw new Error('La respuesta no es un JSON válido.'); });
+            })
+            .then(respuesta => {
+                alertas_ajax(respuesta); // Llama a la función de alertas
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+            })
+            .finally(() => {
+                this.dataset.sending = '0';
+            });
+        };
 
-    // Función para enviar los datos del formulario via AJAX
-    function sendFormData() {
-      const data = new FormData(formulario); // Incluye form_token, etc.
-      const method = formulario.getAttribute("method") || 'POST';
-      const action = formulario.getAttribute("action");
-
-      fetch(action, {
-        method,
-        body: data,
-        credentials: 'include',
-        cache: 'no-cache'
-      })
-      .then(respuesta => {
-        if (!respuesta.ok) throw new Error(`Error HTTP ${respuesta.status}`);
-        const ct = respuesta.headers.get("content-type") || "";
-        return ct.includes("application/json") ? respuesta.json() : respuesta.text();
-      })
-      .then(respuesta => {
-        if (typeof respuesta === 'object') {
-          alertas_ajax(respuesta); // Tu función existente
+        // Si el formulario NO tiene la clase 'no-confirm', mostramos SweetAlert
+        if (!this.classList.contains('no-confirm')) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Quieres realizar la acción solicitada",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, realizar',
+                cancelButtonText: 'No, cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendFormData();
+                }
+            });
         } else {
-          console.error("Respuesta inesperada (HTML):", respuesta);
-          Swal.fire({ icon: 'error', title: 'Error', text: 'El servidor no devolvió JSON.' });
+            // Si SÍ tiene la clase 'no-confirm' (como nuestro buscador), envía los datos directamente
+            sendFormData();
         }
-      })
-      .catch(err => {
-        console.error(err);
-        Swal.fire({ icon: 'error', title: 'Error', text: err.message });
-      })
-      .finally(() => {
-        formulario.dataset.sending = '0';
-      });
-    }
-  }, { passive: false });
+    }, { passive: false });
 });
 
-
-
-
+/* Función de alertas (CORREGIDA) */
 function alertas_ajax(alerta) {
     if (alerta.tipo == "simple") {
         Swal.fire({
@@ -103,7 +91,15 @@ function alertas_ajax(alerta) {
             if (result.isConfirmed) document.querySelector(".FormularioAjax").reset();
         });
     } else if (alerta.tipo == "redireccionar") {
-        window.location.href = alerta.url;
+        // MÉTODO MEJORADO PARA ABRIR EN NUEVA PESTAÑA
+        // Crea un enlace temporal, lo "clickea" y lo elimina.
+        // Esto es más confiable contra los bloqueadores de pop-ups.
+        const link = document.createElement('a');
+        link.href = alerta.url;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 }
 
@@ -218,8 +214,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         list.appendChild(item);
                     });
-
-
 
                     list.style.display = "block";
                 })

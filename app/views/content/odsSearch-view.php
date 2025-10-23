@@ -1,9 +1,9 @@
-<div class="container is-fluid mb-6">
+<div class="container is-fluid mb-1">
     <h1 class="title">ODS</h1>
     <h2 class="subtitle"><i class="fas fa-search fa-fw"></i> &nbsp; Buscar ODS</h2>
 </div>
 
-<div class="container pb-6 pt-6">
+<div class="container pb-1 pt-1">
     <?php
         $modulo_actual = "odsSearch";
         use app\controllers\odsController;
@@ -13,7 +13,7 @@
     ?>
     <div class="columns">
         <div class="column">
-            <form class="FormularioAjax" action="<?php echo APP_URL; ?>app/ajax/buscadorAjax.php" method="POST" autocomplete="off" >
+            <form class="FormularioAjax no-confirm" action="<?php echo APP_URL; ?>app/ajax/buscadorAjax.php" method="POST" autocomplete="off" >
                 <input type="hidden" name="modulo_buscador" value="buscar">
                 <input type="hidden" name="modulo_url" value="<?php echo $modulo_actual; ?>">
                 <div class="field is-grouped">
@@ -40,7 +40,7 @@
     <?php }else{ ?>
     <div class="columns">
         <div class="column">
-            <form class="has-text-centered mt-6 mb-6 FormularioAjax" action="<?php echo APP_URL; ?>app/ajax/buscadorAjax.php" method="POST" autocomplete="off" >
+            <form class="has-text-centered mt-1 mb-1 FormularioAjax no-confirm" action="<?php echo APP_URL; ?>app/ajax/buscadorAjax.php" method="POST" autocomplete="off" >
                 <input type="hidden" name="modulo_buscador" value="eliminar">
                 <input type="hidden" name="modulo_url" value="<?php echo $modulo_actual; ?>">
                 <p><i class="fas fa-search fa-fw"></i> &nbsp; Estas buscando <strong>“<?php echo $_SESSION[$modulo_actual]; ?>”</strong></p>
