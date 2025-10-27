@@ -3,7 +3,6 @@
     <h2 class="subtitle"><i class="fas fa-clipboard-list fa-fw"></i> &nbsp; Lista de ODS</h2>
 </div>
 
-
 <div class="container pb-1 pt-1">
     <div class="form-rest mb-1 mt-1"></div>
     <!-- Contenedor con scroll horizontal -->

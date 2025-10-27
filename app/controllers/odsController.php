@@ -270,10 +270,12 @@
 							<td>
                         	<div class="select is-rounded">
 							<select name="Status" class="status-dropdown" onchange="abrirModalNotificacion('.$rows['Idods'].', this.value)">
-								<option value="Revision" '.($rows['Status'] == 'Revision' ? 'selected' : '').'>Revision</option>
-                                <option value="Precliente" '.($rows['Status'] == 'Precliente' ? 'selected' : '').'>Precliente</option>
-                                <option value="Reparacion" '.($rows['Status'] == 'Reparacion' ? 'selected' : '').'>Reparacion</option>
-                                <option value="LEntregar" '.($rows['Status'] == 'LEntregar' ? 'selected' : '').'>LEntregar</option>
+								<option value="Recepcion" '.($rows['Status'] == 'Recepcion' ? 'selected' : '').'>Recepcion</option>
+                                <option value="Presupuesto" '.($rows['Status'] == 'Presupuesto' ? 'selected' : '').'>Presupuesto</option>
+                                <option value="Autorizacion" '.($rows['Status'] == 'Autorizacion' ? 'selected' : '').'>Autorizacion</option>
+								<option value="Reparacion" '.($rows['Status'] == 'Reparacion' ? 'selected' : '').'>Reparacion</option>
+                                <option value="StandBy" '.($rows['Status'] == 'StandBy' ? 'selected' : '').'>StandBy</option>
+								<option value="LEntregar" '.($rows['Status'] == 'LEntregar' ? 'selected' : '').'>LEntregar</option>
                                 <option value="Entregado" '.($rows['Status'] == 'Entregado' ? 'selected' : '').'>Entregado</option>
                             </select>
                         	</div>

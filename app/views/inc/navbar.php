@@ -3,14 +3,12 @@
         <i class="fas fa-exchange-alt fa-fw" id="btn-menu"></i>
         <nav class="navBar-options-list">
             <ul class="list-unstyle">
-
                 <li class="noLink">
                     <form class="FormularioAjax no-confirm" action="<?php echo APP_URL; ?>app/ajax/buscadorAjax.php" method="POST" autocomplete="off">
                         <input type="hidden" name="modulo_buscador" value="buscar">
                         <input type="hidden" name="modulo_url" value="odsSearch">
-
                         <div class="search-box">
-                            <input class="search-input" type="text" name="txt_buscador" placeholder="Buscar ODS por ID o Cliente..." required>
+                            <input class="search-input" type="text" name="txt_buscador" placeholder="Buscar por ODS o Nombre" required>
                             <button type="submit" class="search-btn">
                                 <i class="fas fa-search"></i>
                             </button>
@@ -38,7 +36,6 @@
         </nav>
     </div>
 </div>
-
 <style>
 /* Contenedor principal para la caja de búsqueda */
 .search-box {
@@ -91,6 +88,5 @@
     color: #333;
 }
 </style>
-
 </body>
 </html>
