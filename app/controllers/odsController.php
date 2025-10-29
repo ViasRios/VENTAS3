@@ -1,11 +1,12 @@
 <?php
-
 	namespace app\controllers;
 	use app\models\mainModel;
-
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 	class odsController extends mainModel{
 
-		/*----------  Controlador registrar ODS  ----------*/
+		/*----------  Controlador registrar ODS  ----------
 		public function registrarOdsControlador(){
                 $get = function($key, $default = '') {
 				return isset($_POST[$key]) ? $_POST[$key] : $default;
@@ -13,7 +14,7 @@
 			// === Campos que tu form envía hoy ===
 			$Idcliente    = $this->limpiarCadena($get('Idcliente',''));
 			$Idasesor     = $this->limpiarCadena($get('Idasesor',''));
-
+			$IdTecnico    = $this->limpiarCadena($get('IdTecnico',''));
 			$Tipo         = $this->limpiarCadena($get('Tipo',''));
 			$Marca        = $this->limpiarCadena($get('Marca',''));
 			$Modelo       = $this->limpiarCadena($get('Modelo',''));
@@ -85,11 +86,11 @@
 
 			// === INSERT DIRECTO con la MISMA conexión (para tener lastInsertId correcto) ===
 			$sql = "INSERT INTO ods
-				(Idcliente, Idasesor, Tipo, Marca, Modelo, Noserie, Color, Contrasena,
+				(Idcliente, Idasesor, IdTecnico, Tipo, Marca, Modelo, Noserie, Color, Contrasena,
 				Respaldo, Uso, Carpeta, Problema, Inspeccion, Accesorios,
 				Fecha, Hora, Tiempo, Status, Garantia, Odsanterior, Sucursal, Componentes, Reparacion)
 				VALUES
-				(:Idcliente,:Idasesor,:Tipo,:Marca,:Modelo,:Noserie,:Color,:Contrasena,
+				(:Idcliente,:Idasesor,:IdTecnico,:Tipo,:Marca,:Modelo,:Noserie,:Color,:Contrasena,
 				:Respaldo,:Uso,:Carpeta,:Problema,:Inspeccion,:Accesorios,
 				:Fecha,:Hora,:Tiempo,:Status,:Garantia,:Odsanterior,:Sucursal,:Componentes, :Reparacion)";
 
@@ -98,7 +99,7 @@
 				// Si Idcliente/Idasesor NO admiten NULL en tu BD, reemplaza null por 0 o quítalos del INSERT
 				':Idcliente'    => ($Idcliente !== '' ? $Idcliente : null),
 				':Idasesor'     => ($Idasesor  !== '' ? $Idasesor  : null),
-
+				':IdTecnico'    => ($IdTecnico !== '' ? $IdTecnico : null),
 				':Tipo'         => $Tipo,
 				':Marca'        => $Marca,
 				':Modelo'       => $Modelo,
@@ -130,16 +131,153 @@
 				return ["success"=>false,"tipo"=>"simple","titulo"=>"Error","texto"=>"No se pudo registrar la ODS.","icono"=>"error"];
 			}
 
-			$idInsertado = (int)$pdo->lastInsertId();               // ← ID correcto
-			$pdf_url = APP_URL . "app/views/content/odsPrint.php?id=" . $idInsertado;
+			$idInsertado = (int)$pdo->lastInsertId();
 
+			// Prepara la respuesta JSON que el script SÍ entiende
+			$respuesta = [
+				"success" => true,
+				"id" => $idInsertado
+			];
 
-			header("Location: " . $pdf_url);
+			echo json_encode($respuesta);
 			exit();
 
-		}
+		} */
         //return json_encode($alerta);
-		
+		public function registrarOdsControlador(){
+        
+        // --- INICIO: FORZAR ERRORES (Solo para depurar) ---
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+        // --- FIN: FORZAR ERRORES ---
+
+        $get = function($key, $default = '') {
+            return isset($_POST[$key]) ? $_POST[$key] : $default;
+        };
+
+        // === Leer TODOS los campos del formulario ===
+        $Idcliente   = $this->limpiarCadena($get('Idcliente',''));
+        $Idasesor    = $this->limpiarCadena($get('Idasesor',''));
+        $IdTecnico   = $this->limpiarCadena($get('IdTecnico','')); // <-- CAMBIO 1: Leer el Técnico
+
+        $Tipo        = $this->limpiarCadena($get('Tipo',''));
+        $Marca       = $this->limpiarCadena($get('Marca',''));
+        $Modelo      = $this->limpiarCadena($get('Modelo',''));
+        $Noserie     = $this->limpiarCadena($get('Noserie',''));
+        $Color       = $this->limpiarCadena($get('Color',''));
+        $Contrasena  = $this->limpiarCadena($get('Contrasena',''));
+
+        $Respaldo    = $this->limpiarCadena($get('Respaldo',''));
+        $Uso         = $this->limpiarCadena($get('Uso',''));
+        $Carpeta     = $this->limpiarCadena($get('Carpeta',''));
+
+        $Problema    = $this->limpiarCadena($get('Problema',''));
+        $Inspeccion  = $this->limpiarCadena($get('Inspeccion',''));
+        $Accesorios  = $this->limpiarCadena($get('Accesorios',''));
+
+        $Fecha       = $this->limpiarCadena($get('Fecha', date('Y-m-d')));
+        $Hora        = date('H:i:s');
+
+        $Tiempo      = $this->limpiarCadena($get('Tiempo',''));
+        $Status      = $this->limpiarCadena($get('Status','Recepcion'));
+        
+        $Garantia    = $this->limpiarCadena($get('Garantia','0'));
+        $Garantia    = ($Garantia==='1' || $Garantia===1) ? 1 : 0;
+        $Odsanterior = $this->limpiarCadena($get('Odsanterior',''));
+
+        $Sucursal    = $this->limpiarCadena($get('Sucursal',''));
+        $Componentes = $this->limpiarCadena($get('Componentes',''));
+        $Reparacion  = $this->limpiarCadena($get('Reparacion',''));
+
+        // === Validaciones (Devolviendo JSON para el script local) ===
+        if($Tipo==="" || $Marca==="" || $Modelo==="" || $Noserie===""){
+            return [
+                "success"=>false, 
+                "error"=>"Datos incompletos: Completa Tipo, Marca, Modelo y No. Serie."
+            ];
+        }
+        if($IdTecnico===""){
+             return [
+                "success"=>false, 
+                "error"=>"Dato requerido: El campo Técnico es obligatorio."
+            ];
+        }
+        
+        $pdo = \app\models\mainModel::conectar();
+
+        // === Garantía / Odsanterior ===
+        if($Garantia===1){
+            if($Odsanterior===""){
+                return ["success"=>false, "error"=>"Para garantía debes indicar la ODS anterior."];
+            }
+            $stmtChk = $pdo->prepare("SELECT Idods FROM ods WHERE Idods = :id LIMIT 1");
+            $stmtChk->execute([":id"=>$Odsanterior]);
+            if(!$stmtChk->fetchColumn()){
+                return ["success"=>false, "error"=>"La ODS anterior indicada ($Odsanterior) no existe."];
+            }
+            $Odsanterior = (int)$Odsanterior;
+        } else {
+            $Odsanterior = 0;
+        }
+
+        // === INSERT (Con IdTecnico) ===
+        $sql = "INSERT INTO ods
+            (Idcliente, Idasesor, IdTecnico, Tipo, Marca, Modelo, Noserie, Color, Contrasena,
+            Respaldo, Uso, Carpeta, Problema, Inspeccion, Accesorios,
+            Fecha, Hora, Tiempo, Status, Garantia, Odsanterior, Sucursal, Componentes, Reparacion)
+            VALUES
+            (:Idcliente,:Idasesor,:IdTecnico,:Tipo,:Marca,:Modelo,:Noserie,:Color,:Contrasena,
+            :Respaldo,:Uso,:Carpeta,:Problema,:Inspeccion,:Accesorios,
+            :Fecha,:Hora,:Tiempo,:Status,:Garantia,:Odsanterior,:Sucursal,:Componentes,:Reparacion)";
+
+        $stmt = $pdo->prepare($sql);
+        $ok = $stmt->execute([
+            ':Idcliente'   => ($Idcliente !== '' ? $Idcliente : null),
+            ':Idasesor'    => ($Idasesor  !== '' ? $Idasesor  : null),
+            ':IdTecnico'   => ($IdTecnico !== '' ? $IdTecnico : null), // <-- CAMBIO 2: Añadir al execute
+
+            ':Tipo'        => $Tipo,
+            ':Marca'       => $Marca,
+            ':Modelo'      => $Modelo,
+            ':Noserie'     => $Noserie,
+            ':Color'       => $Color,
+            ':Contrasena'  => $Contrasena,
+            ':Respaldo'    => $Respaldo,
+            ':Uso'         => $Uso,
+            ':Carpeta'     => $Carpeta,
+            ':Problema'    => $Problema,
+            ':Inspeccion'  => $Inspeccion,
+            ':Accesorios'  => $Accesorios,
+            ':Fecha'       => $Fecha,
+            ':Hora'        => $Hora,
+            ':Tiempo'      => $Tiempo,
+            ':Status'      => $Status,
+            ':Garantia'    => $Garantia,
+            ':Odsanterior' => $Odsanterior,
+            ':Sucursal'    => $Sucursal,
+            ':Componentes' => $Componentes,
+            ':Reparacion'  => $Reparacion
+        ]);
+
+        // --- CAMBIO 3: Devolver el error de SQL real ---
+        if(!$ok){
+            $errorInfo = $stmt->errorInfo();
+            $sqlError = $errorInfo[2]; // Error de SQL
+
+            return [
+                "success" => false,
+                "error" => "Error de SQL: " . $sqlError 
+            ];
+        }
+
+        // --- CAMBIO 4: Devolver el JSON correcto al tener éxito ---
+        $idInsertado = (int)$pdo->lastInsertId();
+        return [
+            "success" => true,
+            "id" => $idInsertado
+        ];
+    }
 		/*----------  Controlador listar ODS  ----------*/
 		public function listarOdsControlador($pagina,$registros,$url,$busqueda){
 

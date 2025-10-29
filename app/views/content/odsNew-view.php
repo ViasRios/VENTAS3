@@ -58,7 +58,7 @@
 				</div>
 				</div>
 				<div class="level-right pt-5">
-					<button type="button" id="btn_guardar_cliente" class="button is-link is-small">
+					<button type="submit" id="btn_guardar_cliente" class="button is-link is-small">
 					<i class="fas fa-user-plus"></i>&nbsp; Guardar cliente
 					</button>
 				</div>
@@ -481,7 +481,7 @@ $tecnicos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
     <!-- Botón para generar ODS -->
-    <button type="submit" class="button is-info is-rounded" id="btn-generar">
+    <button type="button" class="button is-info is-rounded" id="btn-generar">
       <i class="far fa-save"></i>&nbsp; Generar ODS
     </button>
 
@@ -498,41 +498,65 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector('form.FormularioAjax');
   const btn  = document.getElementById('btn-generar');
 
-  let previewWin = null;
+  // Toda la lógica se mueve al 'click' del botón
+  btn.addEventListener('click', async (e) => {
+    
+    // 1. Abrir la ventana ANTES de hacer nada
+    let previewWin = window.open('about:blank', '_blank');
 
-  btn.addEventListener('click', () => {
-    // abrir antes de la petición para evitar bloqueos
-    previewWin = window.open('about:blank', '_blank');
-  });
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    // 2. Recolectar los datos del formulario
     const fd = new FormData(form);
+
     try {
+      // 3. Enviar los datos (fetch)
       const res  = await fetch(form.action, { method:'POST', body:fd, credentials:'include' });
       const text = await res.text();
-      if (!res.ok) throw new Error(text.slice(0,400));
-      const json = JSON.parse(text);
+      
+      if (!res.ok) {
+         // Si el servidor da error 404, 500, etc.
+        if (previewWin) previewWin.close();
+        // ESTA ALERTA ES LA QUE VISTE ANTES
+        alert('Error del servidor: ' + res.status); 
+        console.error(text);
+        throw new Error(text.slice(0,400));
+      }
 
+      // 4. Intentar leer el JSON
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch (jsonError) {
+        // Si la respuesta no es JSON (es un error de PHP)
+        if (previewWin) previewWin.close();
+        alert('Error en la respuesta de odsAjax.php. Revisa la consola.');
+        console.error("La respuesta del servidor no fue JSON:", text);
+        throw jsonError;
+      }
+      
+      // 5. Si el JSON es correcto y trae success
       if (json.success && json.id) {
+        // La URL correcta
         const urlPrint = `${BASE}odsPrint.php?id=${encodeURIComponent(json.id)}&auto=1`;
         if (previewWin && !previewWin.closed) {
-          previewWin.location.replace(urlPrint);
+          previewWin.location.replace(urlPrint); // Redirige
         } else {
-          window.open(urlPrint, '_blank'); // por si el usuario canceló el popup previo
+          window.open(urlPrint, '_blank'); 
         }
       } else {
+        // Si el JSON dice {success: false}
+        if (previewWin) previewWin.close();
+        alert('Error al guardar: ' + (json.error || 'No se pudo guardar'));
         throw new Error(json.error || 'No se pudo guardar');
       }
+
     } catch (err) {
-      console.error(err);
+      // Error de red o error ya manejado
+      console.error('Error final en el catch:', err);
       if (previewWin && !previewWin.closed) previewWin.close();
-      alert('Error al generar la ODS.');
     }
-  });
+  }); // Fin del btn.addEventListener
 });
 </script>
-
 
 <!-- buscar servicio -->
 <script>
@@ -1234,7 +1258,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<!-- para abrir la hoja de ods -->
+<!-- para abrir la hoja de ods 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const BASE = "<?php echo APP_URL; ?>";
@@ -1242,7 +1266,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnGenerar = document.getElementById('btn-generar');
     const btnImprimir = document.getElementById('btn-imprimir');
     let pendingPrintWin = null;
-
     // Evento para manejar el envío del formulario (generar la ODS)
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1250,11 +1273,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const res = await fetch(form.action, { method: 'POST', body: fd, credentials: 'include' });
             const text = await res.text();
-            
             if (!res.ok) throw new Error(text.slice(0,400));
             let json;
             try { json = JSON.parse(text); } catch { throw new Error('Respuesta no JSON: '+text.slice(0,400)); }
-
             if (json.success && json.id) {
                 // Cuando se guarda la ODS, redirige a la página de impresión
                 document.dispatchEvent(new CustomEvent('ods:guardada', { detail: { id: json.id } }));
@@ -1265,14 +1286,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error(err);
         }
     });
-
     // Cuando la ODS se ha generado, abrimos la página y habilitamos el botón de impresión
     document.addEventListener('ods:guardada', (ev) => {
         const { id } = ev.detail || {};
         if (!id) return;
 
         // Redirige a la página de ODS generada
-        const urlPrint = `${BASE}ods/odsPrint.php?id=${encodeURIComponent(id)}&auto=1`;
+        const urlPrint = `${BASE}odsPrint.php?id=${encodeURIComponent(id)}&auto=1`;
 
         if (pendingPrintWin && !pendingPrintWin.closed) {
             pendingPrintWin.location.replace(urlPrint);
@@ -1293,5 +1313,68 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+</script>
+-->
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Seleccionar los campos
+  const inpTipo = document.querySelector('input[name="Tipo"]');
+  const selTecnico = document.getElementById('id_tecnico');
+
+  if (!inpTipo || !selTecnico) {
+    console.warn('Campos para auto-asignar técnico no encontrados (Tipo o id_tecnico).');
+    return;
+  }
+
+  // 2. Obtener los IDs (values) de los técnicos clave
+  const options = Array.from(selTecnico.options);
+  
+  const optAlejandro = options.find(o => o.textContent.trim().toUpperCase() === 'ALEJANDRO');
+  const optArturo = options.find(o => o.textContent.trim().toUpperCase() === 'ARTURO M');
+
+  // Guardamos los IDs (ej: '4', '7', o lo que sea que tengan en la BD)
+  const valAlejandro = optAlejandro ? optAlejandro.value : null;
+  const valArturo = optArturo ? optArturo.value : null;
+
+  // 3. Lista de palabras clave para "computadora" (en mayúsculas)
+  //    Agregué varias marcas comunes para ser más preciso
+  const keywordsComputadora = [
+    'HP', 'LAPTOP', 'CPU', 'COMPUTADORA', 'PC', 'ESCRITORIO', 
+    'AIO', 'ALL IN ONE', 'MAC', 'MACBOOK', 'IMAC',
+    'DELL', 'LENOVO', 'ASUS', 'ACER', 'GATEWAY', 'TOSHIBA',
+    'DISCO DURO', 'MONITOR', 'TECLADO', 'MOUSE', 'INSTALACION'
+  ];
+
+  // 4. Función que se ejecuta al cambiar el tipo
+  function autoAsignarTecnico() {
+    const tipoValor = inpTipo.value.trim().toUpperCase();
+    
+    let targetValue = valAlejandro; // Por defecto es ALEJANDRO
+
+    // .some() revisa si algun keyword está incluido en el tipoValor
+    const esComputadora = keywordsComputadora.some(keyword => tipoValor.includes(keyword));
+    
+    if (esComputadora) {
+      targetValue = valArturo; // Si es computadora, es ARTURO M
+    }
+
+    // 5. Revisar si podemos sobrescribir la selección actual
+    const valorActual = selTecnico.value;
+    const esDefault = (valorActual === ''); // "— Selecciona un técnico —"
+    
+    // Solo sobrescribimos si es el default O si es uno de los que asignamos automáticamente
+    // Esto evita borrar una selección manual de, por ejemplo, "FERNANDO"
+    const esAutoAsignable = (valorActual === valAlejandro || valorActual === valArturo);
+
+    if ( (esDefault || esAutoAsignable) && targetValue ) {
+      selTecnico.value = targetValue;
+    }
+  }
+  // 6. Escuchar eventos en el campo "Tipo"
+  // 'blur' se activa cuando el usuario sale del campo
+  inpTipo.addEventListener('blur', autoAsignarTecnico);
+  // 'change' se activa si selecciona algo del datalist
+  inpTipo.addEventListener('change', autoAsignarTecnico);
+});
 </script>
