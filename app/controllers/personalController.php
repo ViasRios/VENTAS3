@@ -1,7 +1,7 @@
 <?php
 	namespace app\controllers;
 	use app\models\mainModel;
-	header('Content-Type: application/json');
+//	header('Content-Type: application/json');
 
 	class personalController extends mainModel{
 		/*----------  Controlador registrar personal  ----------*/
@@ -38,7 +38,7 @@
 				return json_encode($alerta);
 		      #  exit(); #
 		    }
-
+            
 		    if($this->verificarDatos("^\d{4,20}$",$Telefono)){
 		    	$alerta=[
 					"tipo"=>"simple",

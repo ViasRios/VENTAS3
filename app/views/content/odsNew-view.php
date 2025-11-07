@@ -4,7 +4,7 @@
 </div>
 
 <div class="container ml-2 pb-2 pt-2 mr-2">
-	<form class="FormularioAjax" action="<?php echo APP_URL; ?>app/ajax/odsAjax.php" method="POST" autocomplete="off" enctype="multipart/form-data" >
+	<form class="FormularioAjax" id="form_nueva_ods" action="<?php echo APP_URL; ?>app/ajax/odsAjax.php" method="POST" autocomplete="off" enctype="multipart/form-data" >
 		<input type="hidden" name="modulo_ods" value="registrar">
 		<input type="hidden" name="filtro_campo" value="Status">
 		<?php
@@ -495,7 +495,8 @@ $tecnicos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const BASE = "<?php echo APP_URL; ?>"; // ej: /VENTAS3/
-  const form = document.querySelector('form.FormularioAjax');
+  const form = document.getElementById('form_nueva_ods');
+  //form.action = "<?php echo APP_URL; ?>app/ajax/guardar_ods.php";
   const btn  = document.getElementById('btn-generar');
 
   // Toda la lógica se mueve al 'click' del botón
@@ -505,11 +506,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let previewWin = window.open('about:blank', '_blank');
 
     // 2. Recolectar los datos del formulario
-    const fd = new FormData(form);
+    // 2. Recolectar los datos del formulario
+const fd = new FormData(form);
+const params = new URLSearchParams(fd); // <-- Creaste 'params'
 
-    try {
-      // 3. Enviar los datos (fetch)
-      const res  = await fetch(form.action, { method:'POST', body:fd, credentials:'include' });
+try {
+  // 3. Enviar los datos (fetch)
+  // ¡AQUÍ ESTÁ EL CAMBIO! Usa 'params' en lugar de 'fd'
+  const res  = await fetch(form.action, { method:'POST', body:params, credentials:'include' });
       const text = await res.text();
       
       if (!res.ok) {
@@ -543,6 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window.open(urlPrint, '_blank'); 
         }
       } else {
+        console.log('EL SERVIDOR DIJO QUE FALLÓ:', json);
         // Si el JSON dice {success: false}
         if (previewWin) previewWin.close();
         alert('Error al guardar: ' + (json.error || 'No se pudo guardar'));

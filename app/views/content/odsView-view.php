@@ -30,6 +30,9 @@ if (!$ods) {
     echo "<p class='has-text-centered has-text-danger'>La ODS no existe.</p>";
     return;
 }
+// (Consulta para la tabla 'movimiento')
+$sql_pagos = "SELECT * FROM movimientos WHERE Idods = $Idods ORDER BY Fecha DESC, Hora DESC";
+$pagos = mainModel::ejecutarConsulta($sql_pagos)->fetchAll();
 
 // Obtener clase de color por estado
 function claseColorEstado($status) {
@@ -224,14 +227,23 @@ $clase_estado = claseColorEstado($ods['Status']);
                       </p>
 
                       <p><strong>Asesor Recepción:</strong> <span><?php echo $ods['NombreAsesor']; ?></span></p>
-                      <p><strong>Asesor Entrega:</strong> <span><?php echo $ods['NombreTecnico']; ?></span></p>
+                      <p><strong>Técnico:</strong> <span><?php echo $ods['NombreTecnico']; ?></span></p>
                       <p><strong>Fecha entrega:</strong> 
                           <span>
                           <?php $fecha = new DateTime($ods['Fechaentrega']); echo $fecha->format('d/m/Y'); ?>
                           </span>
                       </p>
-                      <p><strong>Saldo a cuenta:</strong> <span><?php echo $ods['Cuenta']; ?></span></p>
                   </div>
+                  <div class="level is-mobile" style="margin-bottom: 0.5rem;">
+                    <div class="level-left">
+                        <p><strong>Saldo a cuenta:</strong> <span><?php echo $ods['Cuenta']; ?></span></p>
+                    </div>
+                    <div class="level-right">
+                        <button class="button is-small is-rounded" id="abrirModalPagos" title="Ver historial de pagos">
+                            <span class="icon"><i class="fas fa-eye"></i></span>
+                        </button>
+                    </div>
+                </div>
               </div>
           </div>
         </div>
@@ -340,6 +352,12 @@ $clase_estado = claseColorEstado($ods['Status']);
                   ?>
                 </tbody>
               </table>
+            </div>
+
+            <div class="level-left mt-5">
+                <button class="button is-small has-text-black has-text-weight-bold" id="abrirModalServicios">
+                  <i class="fas fa-plus-circle"></i>&nbsp; Agregar Servicio(s)
+                </button>
             </div>
 
           </div>
@@ -961,6 +979,244 @@ $clase_estado = claseColorEstado($ods['Status']);
   </div>
 </div>
 
+<!-- ESTRUCTURA MODAL SERVICIOS (Modificado para Autocompletar e IVA) -->
+<div class="modal" id="modalServicios">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Agregar Nuevo Servicio</p>
+      <button class="delete" aria-label="close" id="cerrarModalServicios"></button>
+    </header>
+    <section class="modal-card-body">
+
+      <!-- 
+        CAMBIO 1: 
+        El 'action' apunta a 'servicioAjax.php' (singular) 
+      -->
+      <form id="formNuevoServicio" class="FormularioAjax" action="<?php echo APP_URL; ?>app/ajax/servicioAjax.php" method="POST" autocomplete="off">
+
+        <!-- 
+          CAMBIO 2: 
+          El 'name' es 'modulo_servicio' (singular) 
+        -->
+        <input type="hidden" name="modulo_servicio" value="registrar">
+
+        <div class="field">
+            <label class="label">#ODS</label>
+            <div class="control">
+                <input class="input" type="text" name="Idods" value="<?php echo isset($ods['Idods']) ? htmlspecialchars($ods['Idods']) : ''; ?>" readonly>
+            </div>
+        </div>
+
+        <!-- CAMPO DE BÚSQUEDA -->
+        <div class="field">
+            <label class="label">Descripción del Servicio</label>
+            <!-- Contenedor con posición relativa -->
+            <div class="control" style="position: relative;">
+                <!-- ID único para el input de descripción -->
+                <input class="input" type="text" name="Descripcion" id="servicio_descripcion_input" placeholder="Escribe para buscar..." required>
+                
+                <!-- Contenedor para las sugerencias -->
+                <div id="sug-servs" class="box"
+                 style="position:absolute; z-index:30; width:100%; display:none; max-height:220px; overflow:auto; padding:0;"></div>
+            </div>
+        </div>
+
+        <!-- 
+          CAMBIO 3: 
+          Nuevos campos para Subtotal, IVA y Total. 
+          El 'Costo' ahora es 'Subtotal'.
+        -->
+
+        <div class="field">
+            <label class="label">Subtotal (Costo sin IVA)</label>
+            <div class="control">
+                <!-- ID 'servicio_costo_input' se mantiene para el JS -->
+                <!-- El 'name' es 'Costo' para tu BD -->
+                <input class="input" type="number" name="Costo" id="servicio_costo_input" placeholder="0.00" step="0.01" min="0" required>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">IVA (16%)</label>
+            <div class="control">
+                <input class="input" type="text" id="servicio_iva_input" readonly style="background-color:#f5f5f5;">
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">Total (IVA Incluido)</label>
+            <div class="control">
+                <input class="input" type="text" id="servicio_total_input" readonly style="background-color:#f5f5f5;">
+            </div>
+        </div>
+
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-success" type="submit" form="formNuevoServicio">Guardar Servicio</button>
+      <button class="button" id="cancelarModalServicios">Cancelar</button>
+    </footer>
+  </div>
+</div>
+
+<!-- 
+  CAMBIO 4: 
+  Añadimos el script para calcular IVA 
+-->
+<script>
+// Función para calcular y mostrar el IVA
+function calcularIVA(costoBase) {
+    const costo = parseFloat(costoBase) || 0;
+    const iva = costo * 0.16;
+    const total = costo + iva;
+
+    // Buscamos los campos por su ID y los actualizamos
+    const subtotalInput = document.getElementById('servicio_costo_input');
+    const ivaInput = document.getElementById('servicio_iva_input');
+    const totalInput = document.getElementById('servicio_total_input');
+
+    // Asignamos el costo base al subtotal (si no es el que disparó el evento)
+    if (subtotalInput && subtotalInput.value !== costoBase) {
+        subtotalInput.value = costo.toFixed(2);
+    }
+    // Asignamos IVA y Total
+    if (ivaInput) {
+        ivaInput.value = iva.toFixed(2);
+    }
+    if (totalInput) {
+        totalInput.value = total.toFixed(2);
+    }
+}
+
+// Añadimos el listener al campo de costo (subtotal)
+document.addEventListener('DOMContentLoaded', () => {
+    const costoInput = document.getElementById('servicio_costo_input');
+    if (costoInput) {
+        // Se activa cada vez que el usuario teclea en el campo de costo
+        costoInput.addEventListener('input', (e) => {
+            calcularIVA(e.target.value);
+        });
+    }
+});
+</script>
+
+
+<script>
+// ... existing code ... -->
+document.getElementById("cancelarModalServicios").addEventListener("click", function () {
+  document.getElementById("modalServicios").classList.remove("is-active");
+});
+</script>
+
+<script>
+// ... existing code ... -->
+document.getElementById('formNuevoServicio').addEventListener('submit', function(event) {
+    event.preventDefault(); // Evitar envío tradicional
+
+    var form = new FormData(this); // Capturar datos
+// ... existing code ... -->
+    xhr.send(form); // Enviar datos
+});
+</script>
+
+<!-- 
+  CAMBIO 5: 
+  Modificamos el script de autocompletar de PRODUCTOS
+  para que sea el de SERVICIOS
+-->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // IDs de nuestro modal de SERVICIOS
+  const inp        = document.getElementById('servicio_descripcion_input');
+  const costoInput = document.getElementById('servicio_costo_input');
+  const sug        = document.getElementById('sug-servs');
+
+  if (!inp || !sug || !costoInput) return; // Si no existen los elementos, no hace nada
+
+  let timer = null;
+
+  function showSug(items){
+    if (!items || !items.length) { sug.style.display = 'none'; sug.innerHTML = ''; return; }
+    
+    // Adaptamos el HTML a los campos 'Descripcion' y 'Costo' de la BD
+    sug.innerHTML = items.map(it => `
+      <div class="p-3 is-clickable suggestion-item"
+           data-id="${it.Descripcion}" 
+           data-nombre="${(it.Descripcion || '').replace(/"/g,'&quot;')}"
+           data-costo="${it.Costo ?? ''}">
+        
+        <strong>${it.Descripcion ?? ''}</strong>
+        ${it.Costo !== undefined ? `<small class="tag is-info is-light ml-2">$${it.Costo}</small>` : ``}
+      </div>
+      <hr class="m-0">
+    `).join('');
+    
+    if (sug.lastElementChild && sug.lastElementChild.tagName === 'HR') sug.removeChild(sug.lastElementChild);
+    sug.style.display = 'block';
+  }
+
+  function hideSug(){ sug.style.display = 'none'; }
+
+  inp.addEventListener('input', () => {
+    const q = inp.value.trim();
+    
+    // Cuando escribe, resetea el costo
+    costoInput.value = ''; 
+    calcularIVA(0); // Limpia los campos de IVA
+
+    clearTimeout(timer);
+    if (q.length < 2) { hideSug(); return; } // Busca a partir de 2 letras
+
+    timer = setTimeout(async () => {
+      try {
+        const form = new FormData();
+        // Apuntamos al módulo y AJAX correctos
+        form.append('modulo_servicio', 'buscar'); // SINGULAR
+        form.append('termino', q);
+        
+        window.APP_URL = "<?php echo APP_URL; ?>";
+        // CAMBIO: Apuntamos a 'servicioAjax.php' (SINGULAR)
+        const res  = await fetch(`${window.APP_URL}app/ajax/servicioAjax.php`, {
+          method: 'POST',
+          body: form,
+          credentials: 'include'
+        });
+
+        const text = await res.text();
+        let data = null;
+        try { data = JSON.parse(text); } catch {}
+
+        if (data && data.ok && Array.isArray(data.items)) showSug(data.items);
+        else hideSug();
+      } catch (e) {
+        console.error(e); hideSug();
+      }
+    }, 250); // Pequeña pausa para no saturar la BD
+  });
+
+  // Al hacer clic en una sugerencia
+  sug.addEventListener('click', (e) => {
+    const item = e.target.closest('.suggestion-item'); if (!item) return;
+    
+    // Rellena los campos 'Descripcion' y 'Costo'
+    inp.value = item.dataset.nombre || '';
+    
+    // Rellena el costo y se asegura que sea modificable
+    costoInput.value = item.dataset.costo || '';
+    costoInput.readOnly = false; // Nos aseguramos que sea editable
+    
+    // LLama a la función de calcular IVA
+    calcularIVA(item.dataset.costo);
+
+    hideSug();
+  });
+
+  document.addEventListener('click', (e) => { if (!sug.contains(e.target) && e.target !== inp) hideSug(); });
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideSug(); });
+});
+</script>
+
 <!-- Modal de confirmación para agregar seguimiento -->
 <div id="seguimientoModal" class="modal">
     <div class="modal-background"></div>
@@ -1025,6 +1281,12 @@ document.getElementById("cerrarModalReporte").addEventListener("click", function
 document.getElementById("cancelarModalReporte").addEventListener("click", function () {
   document.getElementById("modalReporte").classList.remove("is-active");
 });
+document.getElementById("abrirModalServicios").addEventListener("click", function () {
+  document.getElementById("modalServicios").classList.add("is-active");
+});
+document.getElementById("cancelarModalServicios").addEventListener("click", function () {
+  document.getElementById("modalServicios").classList.remove("is-active");
+});
 </script>
 
 <script>
@@ -1048,6 +1310,57 @@ document.getElementById("cerrarModalRefaccion").addEventListener("click", functi
 });
 document.getElementById("cancelarModalRefaccion").addEventListener("click", function () {
   document.getElementById("modalRefaccion").classList.remove("is-active");
+});
+</script>
+
+<script>
+// Abrir modal
+document.getElementById("abrirModalServicios").addEventListener("click", function () {
+  document.getElementById("modalServicios").classList.add("is-active");
+});
+
+// Cerrar modal (botón X)
+document.getElementById("cerrarModalServicios").addEventListener("click", function () {
+  document.getElementById("modalServicios").classList.remove("is-active");
+});
+
+// Cerrar modal (botón Cancelar)
+document.getElementById("cancelarModalServicios").addEventListener("click", function () {
+  document.getElementById("modalServicios").classList.remove("is-active");
+});
+</script>
+
+<script>
+document.getElementById('formNuevoServicio').addEventListener('submit', function(event) {
+    event.preventDefault(); // Evitar envío tradicional
+
+    var form = new FormData(this); // Capturar datos
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", this.action, true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                // Asumimos que tu 'servicioAjax.php' devuelve JSON
+                var response = JSON.parse(xhr.responseText); 
+
+                // Usamos 'alerta' como tipo de respuesta, igual que tus otros formularios
+                if (response.tipo === 'limpiar' || response.tipo === 'recargar') {
+                    alert(response.texto || 'Servicio agregado con éxito');
+                    // Recargar la página para ver el nuevo servicio en la tabla
+                    location.reload(); 
+                } else {
+                    alert(response.texto || 'Error: No se pudo agregar el servicio');
+                }
+            } catch (e) {
+                alert('Respuesta inesperada del servidor. Intente de nuevo.');
+                console.error("Respuesta no JSON:", xhr.responseText);
+            }
+        } else {
+            alert('Hubo un error de conexión al guardar el servicio.');
+        }
+    };
+    xhr.send(form); // Enviar datos
 });
 </script>
 
@@ -1141,7 +1454,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-document.addEventListener('submit', async (e) => {
+//document.addEventListener('submit', async (e) => {
+  document.getElementById('formNuevoRefaccion').addEventListener('submit', async (e) => {
     const form = e.target;
     if (!form.classList.contains('FormularioAjax')) return;
 
@@ -1588,3 +1902,208 @@ document.addEventListener('click', function(event) {
     }
 });
 </script>
+
+<!-- 1. MODAL HISTORIAL DE PAGOS (Corregido) -->
+<div class="modal" id="modalPagos">
+  <div class="modal-background"></div>
+  <div class="modal-card" style="width: 80%; max-width: 768px;">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Historial de Pagos (ODS #<?php echo $Idods; ?>)</p>
+      <button class="delete" aria-label="close" id="cerrarModalPagos"></button>
+    </header>
+    <section class="modal-card-body">
+      <?php if (empty($pagos)): ?>
+        <p class="has-text-centered">No hay pagos (movimientos) registrados para esta ODS.</p>
+      <?php else: ?>
+        <div class="table-container">
+            <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+            <thead>
+                <tr>
+                <th>Fecha y Hora</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Medio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($pagos as $movimiento): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($movimiento['Fecha'] . ' ' . $movimiento['Hora']))); ?></td>
+                    <td><?php echo htmlspecialchars($movimiento['Tipo']); ?></td>
+                    <td>$<?php echo htmlspecialchars(number_format($movimiento['Cantidad'], 2)); ?></td>
+                    <td>
+                        <?php
+                            // Almacenamos el valor de la base de datos
+                            $medio_db = $movimiento['Medio'];
+                            // Creamos una "traducción" para los valores numéricos antiguos
+                            $medio_texto = match(strval($medio_db)) {
+                                '0' => 'Efectivo',
+                                '1' => 'Tarjeta',
+                                '2' => 'Transferencia',
+                                '3' => 'Otro',
+                                default => $medio_db 
+                            };
+                            echo htmlspecialchars($medio_texto);
+                        ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+            </table>
+        </div>
+      <?php endif; ?>
+    </section>
+    
+    <!-- PIE DE PÁGINA CORREGIDO -->
+    <footer class="modal-card-foot">
+      
+      <!-- BOTÓN "NUEVO PAGO" (AHORA DENTRO DEL FOOTER) -->
+      <button class="button is-success" id="abrirModalNuevoPago">
+        <span class="icon is-small"><i class="fas fa-plus"></i></span>
+        <span>Nuevo Pago</span>
+      </button>
+      
+      <!-- BOTÓN "CERRAR" -->
+      <button class="button" id="cancelarModalPagos">Cerrar</button>
+
+    </footer>
+  </div>
+</div>
+<!-- FIN DEL MODAL HISTORIAL PAGOS -->
+
+<!-- 2. NUEVO MODAL PARA AGREGAR PAGO (El formulario) -->
+<div class="modal" id="modalNuevoPago">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Registrar Nuevo Pago (ODS #<?php echo $Idods; ?>)</p>
+      <button class="delete" aria-label="close" id="cerrarModalNuevoPago"></button>
+    </header>
+    <section class="modal-card-body">
+      
+      <!-- Formulario AJAX para el nuevo movimiento -->
+      <form id="formNuevoPago" class="FormularioAjax" action="<?php echo APP_URL; ?>app/ajax/movimientoAjax.php" method="POST" autocomplete="off">
+        
+        <input type="hidden" name="modulo_movimiento" value="registrar">
+        <input type="hidden" name="Idods" value="<?php echo $Idods; ?>">
+
+        <div class="field">
+            <label class="label">Tipo de Movimiento</label>
+            <div class="control">
+                <div class="select is-fullwidth">
+                    <select name="Tipo" required>
+                        <option value="" selected disabled>Seleccione una opción</option>
+                        <option value="Pago">Pago</option>
+                        <option value="Devolución">Devolución</option>
+                        <option value="Anticipo">Anticipo</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">Cantidad</label>
+            <div class="control">
+                <input class="input" type="number" name="Cantidad" step="0.01" min="0" placeholder="Ej: 200.00" required>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">Medio de Pago</label>
+            <div class="control">
+                <div class="select is-fullwidth">
+                    <select name="Medio" required>
+                        <option value="" selected disabled>Seleccione una opción</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-success" type="submit" form="formNuevoPago">Guardar Pago</button>
+      <button class="button" id="cancelarModalNuevoPago">Cancelar</button>
+    </footer>
+  </div>
+</div>
+<!-- --- FIN DEL MODAL DE NUEVO PAGO --- -->
+
+<!-- 3. JS PARA MODAL DE NUEVO PAGO -->
+<script>
+// "Cerebro" del botón "Nuevo Pago"
+document.getElementById("abrirModalNuevoPago").addEventListener("click", function () {
+  // Cierra el modal de historial
+  document.getElementById("modalPagos").classList.remove("is-active");
+  // Abre el modal de nuevo pago
+  document.getElementById("modalNuevoPago").classList.add("is-active");
+});
+
+// "Cerebro" del botón X del formulario
+document.getElementById("cerrarModalNuevoPago").addEventListener("click", function () {
+  document.getElementById("modalNuevoPago").classList.remove("is-active");
+  // Vuelve a abrir el modal de historial
+  document.getElementById("modalPagos").classList.add("is-active");
+});
+
+// "Cerebro" del botón "Cancelar" del formulario
+document.getElementById("cancelarModalNuevoPago").addEventListener("click", function () {
+  document.getElementById("modalNuevoPago").classList.remove("is-active");
+  // Vuelve a abrir el modal de historial
+  document.getElementById("modalPagos").classList.add("is-active");
+});
+
+// "Cerebro" para enviar el formulario de pago
+document.getElementById('formNuevoPago').addEventListener('submit', function(event) {
+  
+    event.preventDefault(); 
+    var form = new FormData(this); 
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", this.action, true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var response = JSON.parse(xhr.responseText); 
+                // Revisa la respuesta del 'movimientoController.php'
+                if (response.tipo === 'limpiar' || response.tipo === 'recargar') {
+                  //  alert(response.texto || 'Pago agregado con éxito');
+                    // Cierra el modal de pago
+                    document.getElementById("modalNuevoPago").classList.remove("is-active");
+                    // Recarga la página para ver el historial y saldo actualizados
+                    location.reload(); 
+                } else {
+                    alert(response.texto || 'Error: No se pudo agregar el pago');
+                }
+            } catch (e) {
+                alert('Respuesta inesperada del servidor.');
+            }
+        } else {
+            alert('Error de conexión al guardar el pago.');
+        }
+    };
+    xhr.send(form); 
+});
+</script>
+<!-- --- FIN DEL JS --- -->
+
+
+<!-- --- NUEVO CÓDIGO: JS PARA MODAL DE PAGOS --- -->
+<script>
+document.getElementById("abrirModalPagos").addEventListener("click", function () {
+  document.getElementById("modalPagos").classList.add("is-active");
+});
+
+document.getElementById("cerrarModalPagos").addEventListener("click", function () {
+  document.getElementById("modalPagos").classList.remove("is-active");
+});
+
+document.getElementById("cancelarModalPagos").addEventListener("click", function () {
+  document.getElementById("modalPagos").classList.remove("is-active");
+});
+</script>
+<!-- --- FIN DE MODAL PAGOS --- -->

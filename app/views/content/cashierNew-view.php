@@ -33,13 +33,11 @@
 
     <div class="box" style="background:#f0f8ff;">
         <h3 class="title is-4">Agregar Productos</h3>
-    
         <div class="columns">
             <div class="column">
                 <div class="control">
                     <label>Producto o Servicio<?php echo CAMPO_OBLIGATORIO; ?></label>
                     <div id="producto-lista" class="lista-autocompletado"></div>
-
                     <input class="input" type="text" name="producto" id="producto" autocomplete="off" placeholder="Buscar producto..." disabled>
                 </div>
             </div>
@@ -75,8 +73,9 @@
                 </button>
             </div>
         </div>
+    </div> 
 
-    </div> <div class="table-container">
+    <div class="table-container">
         <table class="table is-fullwidth is-striped is-hoverable" id="tabla_productos">
             <thead>
                 <tr>
@@ -258,7 +257,6 @@
                     }
                 })
                 .catch(error => {
-                    // Esto atrapará el "Unexpected token '<'" si PHP falla
                     console.error('Error al obtener los productos:', error);
                     let lista = document.getElementById("producto-lista");
                     lista.innerHTML = '<div class="box" style="background:#ffcccc;">Error al procesar la respuesta. Revise la consola.</div>';
@@ -272,29 +270,24 @@
     const tablaProductosBody = document.getElementById('tabla_productos').getElementsByTagName('tbody')[0];
     // ---- 1. Botón "Agregar Producto" ----
     document.getElementById('btn_agregar_producto').addEventListener('click', function() {
-        // Obtener valores de los inputs
         const nombreProd = document.getElementById('producto').value;
         const cantidad = parseFloat(document.getElementById('cantidad').value) || 0;
         const costoUnitario = parseFloat(document.getElementById('costo').value.replace(/[$,]/g, '')) || 0;
-        // Si el campo está vacío o es inválido, usará 0.16 como respaldo.
+        // Si está vacío, usará 0.16 como respaldo.
         const ivaDecimal = parseFloat(document.getElementById('iva').value) || 0.16;
-        // Validación simple
         if (cantidad <= 0 || costoUnitario <= 0 || nombreProd.trim() === "") {
             alert("Por favor, ingrese un producto, cantidad y costo válidos.");
             return;
         }
-        // Calcular totales de la línea
         const subtotalLinea = cantidad * costoUnitario;
         const ivaLinea = subtotalLinea * ivaDecimal;
         const totalLinea = subtotalLinea + ivaLinea;
         // Crear la fila en la tabla
         const newRow = tablaProductosBody.insertRow();
-        // Guardar los datos puros en el 'dataset' de la fila para cálculos fáciles
         newRow.dataset.subtotal = subtotalLinea.toFixed(2);
         newRow.dataset.iva = ivaLinea.toFixed(2);
         newRow.dataset.total = totalLinea.toFixed(2);
 
-        // Insertar las celdas (<td>) con formato
         newRow.innerHTML = `
             <th>${tablaProductosBody.rows.length}</th>
             <td>${nombreProd}</td>

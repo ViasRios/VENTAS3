@@ -188,8 +188,33 @@ error_reporting(E_ALL);
 
         $Sucursal    = $this->limpiarCadena($get('Sucursal',''));
         $Componentes = $this->limpiarCadena($get('Componentes',''));
-        $Reparacion  = $this->limpiarCadena($get('Reparacion',''));
+     //   $Reparacion  = $this->limpiarCadena($get('Reparacion',''));
+		// === INICIO: PROCESAR SERVICIOS ===
+$servicios_json = $get('Servicios', '[]'); // Obtiene el JSON de servicios
+$servicios_data = json_decode($servicios_json, true);
 
+$reparacion_items = [];
+$costorep_items = [];
+
+// Verificamos que sea un array y lo recorremos
+if (is_array($servicios_data) && !empty($servicios_data)) {
+    foreach ($servicios_data as $item) {
+        // Asumo que tu JSON tiene "servicio" y "costo"
+        if (isset($item['servicio'])) {
+            $reparacion_items[] = $this->limpiarCadena($item['servicio']);
+        }
+        if (isset($item['costo'])) {
+            // Limpiamos comas por si el usuario escribe "1,000"
+            $costo_limpio = str_replace(',', '', $item['costo']);
+            $costorep_items[] = $this->limpiarCadena($costo_limpio);
+        }
+    }
+}
+
+// Convertimos los arrays a strings separadas por comas
+$Reparacion = implode(', ', $reparacion_items);
+$Costorep = implode(', ', $costorep_items);
+// === FIN: PROCESAR SERVICIOS ===
         // === Validaciones (Devolviendo JSON para el script local) ===
         if($Tipo==="" || $Marca==="" || $Modelo==="" || $Noserie===""){
             return [
@@ -225,11 +250,11 @@ error_reporting(E_ALL);
         $sql = "INSERT INTO ods
             (Idcliente, Idasesor, IdTecnico, Tipo, Marca, Modelo, Noserie, Color, Contrasena,
             Respaldo, Uso, Carpeta, Problema, Inspeccion, Accesorios,
-            Fecha, Hora, Tiempo, Status, Garantia, Odsanterior, Sucursal, Componentes, Reparacion)
+            Fecha, Hora, Tiempo, Status, Garantia, Odsanterior, Sucursal, Componentes, Reparacion, Costorep)
             VALUES
             (:Idcliente,:Idasesor,:IdTecnico,:Tipo,:Marca,:Modelo,:Noserie,:Color,:Contrasena,
             :Respaldo,:Uso,:Carpeta,:Problema,:Inspeccion,:Accesorios,
-            :Fecha,:Hora,:Tiempo,:Status,:Garantia,:Odsanterior,:Sucursal,:Componentes,:Reparacion)";
+            :Fecha,:Hora,:Tiempo,:Status,:Garantia,:Odsanterior,:Sucursal,:Componentes,:Reparacion,:Costorep)";
 
         $stmt = $pdo->prepare($sql);
         $ok = $stmt->execute([
@@ -257,7 +282,8 @@ error_reporting(E_ALL);
             ':Odsanterior' => $Odsanterior,
             ':Sucursal'    => $Sucursal,
             ':Componentes' => $Componentes,
-            ':Reparacion'  => $Reparacion
+            ':Reparacion'  => $Reparacion,
+			':Costorep'    => $Costorep
         ]);
 
         // --- CAMBIO 3: Devolver el error de SQL real ---
@@ -1342,58 +1368,4 @@ error_reporting(E_ALL);
 		}
 		return $tabla;
 	}
-
-	}
-
-// Sanitizamos
-$productoNombre = mainModel::limpiarCadena($_POST['producto'] ?? '');
-
-// Conexión a la BD
-$db = mainModel::conectar();
-
-// Verificar si el producto existe en inventario
-$stmt = $db->prepare("SELECT COUNT(*) FROM inventario WHERE producto = :prod LIMIT 1");
-$stmt->execute([':prod' => $productoNombre]);
-$existe = $stmt->fetchColumn();
-
-// Si existe, refaccion = 1; si no, refaccion = 0
-$refaccion = $existe > 0 ? 1 : 0;
-
-// Ahora actualizas/inserta en la tabla ODS o refacciones según corresponda
-$sql = $db->prepare("INSERT INTO refacciones (producto, refaccion) VALUES (:prod, :refaccion)");
-$sql->execute([
-    ':prod'      => $productoNombre,
-    ':refaccion' => $refaccion
-]);
-?>
-
-<script>
-function actualizarTecnico(idods, idTecnico) {
-    if (confirm('¿Estás seguro de que deseas asignar este técnico?')) {
-        // Subir un nivel desde odsMe/ a VENTAS3/
-        fetch('../actualizar_tecnico.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'idods=' + idods + '&idTecnico=' + idTecnico
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Técnico actualizado correctamente');
-            } else {
-                alert('Error al actualizar el técnico: ' + data.message);
-                location.reload();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error de conexión');
-            location.reload();
-        });
-    } else {
-        location.reload();
-    }
 }
-</script>
