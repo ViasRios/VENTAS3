@@ -1,131 +1,104 @@
 <?php
-
 	namespace app\controllers;
 	use app\models\mainModel;
-
 	class loginController extends mainModel{
-
 		/*----------  Controlador iniciar sesion  ----------*/
-		public function iniciarSesionControlador($tabla = 'personal'){
-    if(session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-
-    $usuario=$this->limpiarCadena($_POST['login_usuario']);
-    $clave=$this->limpiarCadena($_POST['login_clave']);
-
-    if($usuario=="" || $clave==""){
-        echo '<article class="message is-danger">
-          <div class="message-body">
-            <strong>Ocurrió un error inesperado</strong><br>
-            No has llenado todos los campos que son obligatorios
-          </div>
-        </article>';
-        return;
-    }
-
-    if($this->verificarDatos("[-_a-zA-Z0-9$@.]{4,20}",$usuario)){
-        echo '<article class="message is-danger">
-          <div class="message-body">
-            <strong>Ocurrió un error inesperado</strong><br>
-            El USUARIO no coincide con el formato solicitado
-          </div>
-        </article>';
-        return;
-    }
-
-    if($this->verificarDatos("[-_a-zA-Z0-9$@.]{5,100}",$clave)){
-        echo '<article class="message is-danger">
-          <div class="message-body">
-            <strong>Ocurrió un error inesperado</strong><br>
-            La CLAVE no coincide con el formato solicitado
-          </div>
-        </article>';
-        return;
-    }
-
-    if ($tabla == 'personal') {
-        $check_usuario = $this->ejecutarConsulta("SELECT * FROM personal WHERE usuario='$usuario' AND habilitado=1");
-    } else if ($tabla == 'usuarios') {
-        $check_usuario = $this->ejecutarConsulta("SELECT * FROM usuarios WHERE usuario='$usuario' AND activo=1");
-    } else {
-        echo '<article class="message is-danger">
-          <div class="message-body">
-            <strong>Ocurrió un error inesperado</strong><br>
-            Tabla no soportada
-          </div>
-        </article>';
-        return;
-    }
-
-    if($check_usuario->rowCount()==1){
-        $check_usuario=$check_usuario->fetch();
-
-        if ($tabla == 'personal' && $check_usuario['habilitado'] != 1) {
+    public function iniciarSesionPersonal(){
+        $usuario = $this->limpiarCadena($_POST['login_usuario']);
+        $clave = $this->limpiarCadena($_POST['login_clave']);
+        if($usuario=="" || $clave==""){
             echo '<article class="message is-danger">
-            <div class="message-body">
-                <strong>Acceso denegado</strong><br>
-                Tu cuenta ha sido deshabilitada. Contacta al administrador.
-            </div>
-            </article>';
-            exit;
+                  <div class="message-body"><strong>Error:</strong> Llene todos los campos.</div>
+                </article>';
+            return;
         }
-
-        if(
-            ($tabla == 'personal' && password_verify($clave,$check_usuario['clave1']))
-            ||
-            ($tabla == 'usuarios' && password_verify($clave,$check_usuario['clave']))
-        ){
-
-            if ($tabla == 'personal') {
+        // ... (Aquí va tu lógica de verificación de formato de texto) ...
+        // Verificar usuario en tabla PERSONAL
+        $check_usuario = $this->ejecutarConsulta("SELECT * FROM personal WHERE usuario='$usuario' AND habilitado=1");
+        if($check_usuario->rowCount()==1){
+            $check_usuario=$check_usuario->fetch();
+            
+            if(password_verify($clave, $check_usuario['clave1'])){
                 $_SESSION['id']=$check_usuario['Idasesor'];
                 $_SESSION['nombre']=$check_usuario['Nombre'];
                 $_SESSION['usuario']=$check_usuario['usuario'];
                 $_SESSION['foto']=$check_usuario['personal_foto'];
-                $_SESSION['Puesto']=$check_usuario['Puesto'];  // Asegúrate de que el campo 'puesto' esté en la tabla.
-            } else if ($tabla == 'usuarios') {
-                $_SESSION['usuario']=$check_usuario['usuario'];
-                $_SESSION['id_usuario']=$check_usuario['id'] ?? null;
-            }
-            var_dump($_SESSION['Puesto']); // Verifica si el valor es correcto
-            session_write_close();
+                $_SESSION['Puesto']=$check_usuario['Puesto'];
 
-            // Redirigir según el puesto
-            if ($tabla == 'personal') {
-                $puesto = $_SESSION['Puesto'];
-
-                if ($puesto == 'ASESOR' || $puesto == 'JEFE DE PRODUCCIÓN' || $puesto == 'JEFE_DE_PRODUCCION') {
-                    header("Location: ".APP_URL."dashboard/"); // Redirigir a dashboard de administrador
-                } else if ($puesto == 'TECNICO') {
-                    header("Location: ".APP_URL."dashboardTec/"); // Redirigir a dashboard de técnico
+                // Redirección según puesto
+                if($check_usuario['Puesto']=="TECNICO"){
+                     header("Location: ".APP_URL."dashboardTec/");
                 } else {
-                    header("Location: ".APP_URL."dashboard/"); // Redirigir a un dashboard por defecto
+                     header("Location: ".APP_URL."dashboard/");
                 }
-            } else if ($tabla == 'usuarios') {
-              header("Location: ".APP_URL."dashboard2/");
+                exit;
             } else {
-              header("Location: ".APP_URL."login/");
+                 echo '<article class="message is-danger"><div class="message-body">Clave incorrecta</div></article>';
             }
-            exit;
-
         } else {
-            echo '<article class="message is-danger">
-              <div class="message-body">
-                <strong>Ocurrió un error inesperado</strong><br>
-                Usuario o clave incorrectos
-              </div>
-            </article>';
+            echo '<article class="message is-danger"><div class="message-body">Usuario no encontrado o deshabilitado</div></article>';
         }
-
-    } else {
-        echo '<article class="message is-danger">
-          <div class="message-body">
-            <strong>Ocurrió un error inesperado</strong><br>
-            Usuario o clave incorrectos
-          </div>
-        </article>';
     }
-}
+
+    /*----------  Controlador para iniciar sesión CAJA (Solo Clave)  ----------*/
+    public function iniciarSesionCaja(){
+
+      // Aseguramos que la sesión esté iniciada para poder leer/escribir variables
+      if (session_status() === PHP_SESSION_NONE) {
+          session_start();
+      }
+      
+      $clave = $this->limpiarCadena($_POST['login_clave']);
+
+      // 1. Validar que haya escrito algo
+      if($clave==""){
+          echo '<article class="message is-danger">
+                <div class="message-body"><strong>Error:</strong> Debe ingresar la clave de la caja.</div>
+              </article>';
+          return;
+      }
+
+      // 2. Verificar formato de clave
+      if($this->verificarDatos("[-_a-zA-Z0-9$@.]{5,100}",$clave)){
+          echo '<article class="message is-danger">
+                <div class="message-body"><strong>Error:</strong> Formato de clave incorrecto.</div>
+              </article>';
+          return;
+      }
+
+      $usuarioCaja = "usuario_almacen"; 
+
+      $check_usuario = $this->ejecutarConsulta("SELECT * FROM usuarios WHERE usuario='$usuarioCaja' AND activo=1");
+
+      if($check_usuario->rowCount()==1){
+          $data_usuario = $check_usuario->fetch();
+
+          // Verificamos la contraseña
+          if(password_verify($clave, $data_usuario['clave'])){
+              
+              // --- ÉXITO ---
+              // Solo activamos el permiso, NO tocamos $_SESSION['usuario'] ni $_SESSION['nombre']
+              $_SESSION['caja_activada'] = true; 
+              
+              if(headers_sent()){
+                  echo "<script> window.location.href='".APP_URL."cashierNew/'; </script>";
+              }else{
+                  header("Location: ".APP_URL."cashierNew/");
+              }
+              exit;
+
+          } else {
+              echo '<article class="message is-danger">
+                    <div class="message-body"><strong>Acceso denegado:</strong> La contraseña es incorrecta.</div>
+                  </article>';
+          }
+      } else {
+          echo '<article class="message is-danger">
+                <div class="message-body"><strong>Error:</strong> No se encuentra la configuración de seguridad de la caja.</div>
+              </article>';
+      }
+  }
+
 
 		/*----------  Controlador cerrar sesion  ----------*/
 		public function cerrarSesionControlador(){
@@ -138,4 +111,4 @@
                 header("Location: ".APP_URL."login/");
             }
 		}
-}
+  }
