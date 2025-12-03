@@ -5,113 +5,41 @@ require_once "../../autoload.php";
 
 use app\controllers\odsController;
 
-// Siempre JSON, sin ruido
+// Configuración para evitar errores visibles que rompan el JSON
 header('Content-Type: application/json; charset=utf-8');
 ini_set('display_errors', '0');
-error_reporting(E_ERROR | E_PARSE);
-ob_start();
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING); // Ocultar advertencias
+ob_start(); // Capturar cualquier salida inesperada
 
 try {
-    // Validar método y módulo
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['modulo_ods'])) {
-        ob_clean();
-        echo json_encode(['success'=>false,'error'=>'Petición inválida'], JSON_UNESCAPED_UNICODE);
-        exit;
+        throw new Exception("Petición inválida");
     }
 
     $mod = $_POST['modulo_ods'];
     $ctrl = new odsController();
+    $resp = ['success'=>false, 'error'=>'Módulo desconocido'];
 
-    // Llama el método según el módulo
     switch ($mod) {
-        case 'registrar':
-            $resp = $ctrl->registrarOdsControlador();
-            break;
-        case 'eliminar':
-            $resp = $ctrl->eliminarOdsControlador();
-            break;
-        case 'actualizar':
-            $resp = $ctrl->actualizarOdsControlador();
-            break;
-        case 'cambiar_status':
-            $resp = $ctrl->cambiarStatusOdsControlador();
-            break;
-        default:
-            $resp = ['success'=>false,'error'=>'Módulo no soportado'];
+        case 'registrar':      $resp = $ctrl->registrarOdsControlador(); break;
+        case 'eliminar':       $resp = $ctrl->eliminarOdsControlador(); break;
+        case 'actualizar':     $resp = $ctrl->actualizarOdsControlador(); break;
+        case 'cambiar_status': $resp = $ctrl->cambiarStatusOdsControlador(); break;
+        case 'asignar_tecnico':$resp = $ctrl->actualizar_tecnico_controlador(); break;
     }
 
-    // Normalizar: permitir que el controlador devuelva array o string JSON
+    // Si el controlador devolvió string JSON, lo decodificamos para re-codificarlo limpio
     if (is_string($resp)) {
         $decoded = json_decode($resp, true);
-        $resp = $decoded !== null ? $decoded : ['success'=>false,'error'=>'Respuesta no-JSON del controlador'];
+        $resp = $decoded ?? ['success'=>false, 'error'=>'Error JSON Backend'];
     }
-
-    ob_clean();
-    echo json_encode($resp, JSON_UNESCAPED_UNICODE);
-    exit;
-
-
-} catch (Throwable $e) {
-    ob_clean();
-    echo json_encode(['success'=>false,'error'=>'Excepción: '.$e->getMessage()], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-/* require_once "../../config/app.php";
-require_once "../views/inc/session_start.php";
-require_once "../../autoload.php";
-
-use app\controllers\odsController;
-
-// Siempre JSON, sin ruido
-header('Content-Type: application/json; charset=utf-8');
-ini_set('display_errors', '0');
-error_reporting(E_ERROR | E_PARSE);
-ob_start();
-
-try {
-    // Validar método y módulo
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['modulo_ods'])) {
-        ob_clean();
-        echo json_encode(['success'=>false,'error'=>'Petición inválida'], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    $mod = $_POST['modulo_ods'];
-    $ctrl = new odsController();
-
-    // Llama el método según el módulo
-    switch ($mod) {
-        case 'registrar':
-            $resp = $ctrl->registrarOdsControlador();
-            break;
-        case 'eliminar':
-            $resp = $ctrl->eliminarOdsControlador();
-            break;
-        case 'actualizar':
-            $resp = $ctrl->actualizarOdsControlador();
-            break;
-        case 'cambiar_status':
-            $resp = $ctrl->cambiarStatusOdsControlador();
-            break;
-        default:
-            $resp = ['success'=>false,'error'=>'Módulo no soportado'];
-    }
-
-    // Normalizar: permitir que el controlador devuelva array o string JSON
-    if (is_string($resp)) {
-        $decoded = json_decode($resp, true);
-        $resp = $decoded !== null ? $decoded : ['success'=>false,'error'=>'Respuesta no-JSON del controlador'];
-    }
-
-    ob_clean();
-    echo json_encode($resp, JSON_UNESCAPED_UNICODE);
-    exit;
-
     
+
 } catch (Throwable $e) {
-    ob_clean();
-    echo json_encode(['success'=>false,'error'=>'Excepción: '.$e->getMessage()], JSON_UNESCAPED_UNICODE);
-    exit;
+    $resp = ['success'=>false, 'error'=>'Excepción: '.$e->getMessage()];
 }
-*/
+
+// Limpiar cualquier HTML/Espacio previo y enviar SOLO el JSON
+ob_clean();
+echo json_encode($resp);
+exit;
