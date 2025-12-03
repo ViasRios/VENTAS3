@@ -1,22 +1,106 @@
-<div class="main-container">
+<style>
+    /* Fondo general con degradado moderno */
+.main-container {
+    background: linear-gradient(135deg, #1d4d80 0%, #1d4d80 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif; /* Recomendado importar esta fuente */
+}
+
+/* Efecto de Cristal para la caja */
+.box.login {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: white;
+    padding: 3rem;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Títulos e iconos en blanco para contraste */
+.title.is-5, .label, .icon-user {
+    color: white !important;
+}
+
+/* Estilización del Input */
+.input {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50px; /* Bordes totalmente redondos */
+    padding-left: 20px;
+    height: 45px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.input:focus {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Botón con gradiente y efecto hover */
+.button.is-info {
+    background: linear-gradient(to right, #161a6cff 0%, #1a1b6cff 100%);
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: 1px;
+    width: 100%;
+    height: 45px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+
+.button.is-info:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Animación sutil para el icono principal */
+.icon-user {
+    animation: float 3s ease-in-out infinite;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+</style>
+
+<div class="main-container pb-3 pt-1">
     <form class="box login" action="" method="POST" autocomplete="off">
-        <p class="has-text-centered">
-            <i class="fas fa-user-circle fa-5x"></i>
+        
+        <p class="has-text-centered mb-1">
+            <i class="fas fa-user-circle fa-5x icon-user"></i>
         </p>
-        <h5 class="title is-5 has-text-centered">Inicia sesión para Caja</h5>
+        
+        <h5 class="title is-5 has-text-centered mb-5">Acceso a Caja</h5>
 
-        <input type="hidden" name="login_almacen" value="1"> <!-- Indica que es para login de Caja -->
+        <input type="hidden" name="login_almacen" value="1">
 
-        <!-- Solo se solicita la clave -->
         <div class="field">
-            <label class="label"><i class="fas fa-key"></i> &nbsp; Clave</label>
-            <div class="control">
-                <input class="input" type="password" name="login_clave" pattern="[-_a-zA-Z0-9$@.]{5,100}" maxlength="100" required>
+            <label class="label has-text-weight-normal">
+                <i class="fas fa-lock margin-right-5"></i> Clave de acceso
+            </label>
+            <div class="control has-icons-left">
+                <input class="input" type="password" name="login_clave" placeholder="••••••••" pattern="[-_a-zA-Z0-9$@.]{5,100}" maxlength="100" required>
             </div>
         </div>
 
-        <p class="has-text-centered mb-4 mt-3">
-            <button type="submit" class="button is-info is-rounded">LOG IN</button>
-        </p>
+        <div class="field mt-5">
+            <button type="submit" class="button is-info is-rounded">
+                INGRESAR
+            </button>
+        </div>
+
     </form>
 </div>
