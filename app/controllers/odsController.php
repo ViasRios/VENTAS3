@@ -5,145 +5,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 	class odsController extends mainModel{
-
-		/*----------  Controlador registrar ODS  ----------
-		public function registrarOdsControlador(){
-                $get = function($key, $default = '') {
-				return isset($_POST[$key]) ? $_POST[$key] : $default;
-			};
-			// === Campos que tu form envía hoy ===
-			$Idcliente    = $this->limpiarCadena($get('Idcliente',''));
-			$Idasesor     = $this->limpiarCadena($get('Idasesor',''));
-			$IdTecnico    = $this->limpiarCadena($get('IdTecnico',''));
-			$Tipo         = $this->limpiarCadena($get('Tipo',''));
-			$Marca        = $this->limpiarCadena($get('Marca',''));
-			$Modelo       = $this->limpiarCadena($get('Modelo',''));
-			$Noserie      = $this->limpiarCadena($get('Noserie',''));
-			$Color        = $this->limpiarCadena($get('Color',''));
-			$Contrasena   = $this->limpiarCadena($get('Contrasena',''));
-
-			$Respaldo     = $this->limpiarCadena($get('Respaldo',''));
-			$Uso          = $this->limpiarCadena($get('Uso',''));
-			$Carpeta      = $this->limpiarCadena($get('Carpeta',''));
-
-			$Problema     = $this->limpiarCadena($get('Problema',''));
-			$Inspeccion   = $this->limpiarCadena($get('Inspeccion',''));
-			$Accesorios   = $this->limpiarCadena($get('Accesorios',''));
-
-			// Fecha del form y hora actual (tu form no envía hora)
-			$Fecha        = $this->limpiarCadena($get('Fecha', date('Y-m-d')));
-			$Hora         = date('H:i:s');
-
-			// “Respuesta en” unificado
-			$Tiempo       = $this->limpiarCadena($get('Tiempo',''));
-
-			// Status con validación
-			$Status       = $this->limpiarCadena($get('Status','Recepcion'));
-			$permitidos   = ['Recepcion','Diagnostico','Reparacion'];
-			if (!in_array($Status, $permitidos)) { $Status = 'Recepcion'; }
-
-			// Garantía / ODS anterior
-			$Garantia     = $this->limpiarCadena($get('Garantia','0'));
-			$Garantia     = ($Garantia==='1' || $Garantia===1) ? 1 : 0;
-			$Odsanterior  = $this->limpiarCadena($get('Odsanterior',''));
-
-			$Sucursal     = $this->limpiarCadena($get('Sucursal',''));
-			$Componentes  = $this->limpiarCadena($get('Componentes',''));
-
-			$Reparacion	 = $this->limpiarCadena($get('Reparacion',''));
-
-			// === Validaciones mínimas (ajusta si quieres) ===
-			if($Tipo==="" || $Marca==="" || $Modelo==="" || $Noserie===""){
-				return [
-					"success"=>false, "tipo"=>"simple", "titulo"=>"Datos incompletos",
-					"texto"=>"Completa Tipo, Marca, Modelo, No. Serie.", "icono"=>"error"
-				];
-			}
-			if($this->verificarDatos("[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]{4,50}",$Tipo)){
-				return [
-					"success"=>false, "tipo"=>"simple", "titulo"=>"Formato inválido",
-					"texto"=>"El campo Tipo no coincide con el formato solicitado.", "icono"=>"error"
-				];
-			}
-
-			// === Garantía / Odsanterior ===
-			$pdo = \app\models\mainModel::conectar();
-
-			if($Garantia===1){
-				if($Odsanterior===""){
-					return ["success"=>false,"tipo"=>"simple","titulo"=>"Falta ODS Anterior","texto"=>"Para garantía debes indicar la ODS anterior.","icono"=>"warning"];
-				}
-				$stmtChk = $pdo->prepare("SELECT Idods FROM ods WHERE Idods = :id LIMIT 1");
-				$stmtChk->execute([":id"=>$Odsanterior]);
-				if(!$stmtChk->fetchColumn()){
-					return ["success"=>false,"tipo"=>"simple","titulo"=>"ODS Anterior no válida","texto"=>"La ODS anterior indicada ($Odsanterior) no existe.","icono"=>"error"];
-				}
-				$Odsanterior = (int)$Odsanterior;
-			} else {
-				// Tu BD no permite NULL y usa 0 cuando no aplica
-				$Odsanterior = 0;
-			}
-
-			// === INSERT DIRECTO con la MISMA conexión (para tener lastInsertId correcto) ===
-			$sql = "INSERT INTO ods
-				(Idcliente, Idasesor, IdTecnico, Tipo, Marca, Modelo, Noserie, Color, Contrasena,
-				Respaldo, Uso, Carpeta, Problema, Inspeccion, Accesorios,
-				Fecha, Hora, Tiempo, Status, Garantia, Odsanterior, Sucursal, Componentes, Reparacion)
-				VALUES
-				(:Idcliente,:Idasesor,:IdTecnico,:Tipo,:Marca,:Modelo,:Noserie,:Color,:Contrasena,
-				:Respaldo,:Uso,:Carpeta,:Problema,:Inspeccion,:Accesorios,
-				:Fecha,:Hora,:Tiempo,:Status,:Garantia,:Odsanterior,:Sucursal,:Componentes, :Reparacion)";
-
-			$stmt = $pdo->prepare($sql);
-			$ok = $stmt->execute([
-				// Si Idcliente/Idasesor NO admiten NULL en tu BD, reemplaza null por 0 o quítalos del INSERT
-				':Idcliente'    => ($Idcliente !== '' ? $Idcliente : null),
-				':Idasesor'     => ($Idasesor  !== '' ? $Idasesor  : null),
-				':IdTecnico'    => ($IdTecnico !== '' ? $IdTecnico : null),
-				':Tipo'         => $Tipo,
-				':Marca'        => $Marca,
-				':Modelo'       => $Modelo,
-				':Noserie'      => $Noserie,
-				':Color'        => $Color,
-				':Contrasena'   => $Contrasena,
-
-				':Respaldo'     => $Respaldo,
-				':Uso'          => $Uso,
-				':Carpeta'      => $Carpeta,
-
-				':Problema'     => $Problema,
-				':Inspeccion'   => $Inspeccion,
-				':Accesorios'   => $Accesorios,
-
-				':Fecha'        => $Fecha,
-				':Hora'         => $Hora,
-				':Tiempo'       => $Tiempo,
-
-				':Status'       => $Status,
-				':Garantia'     => $Garantia,
-				':Odsanterior'  => $Odsanterior,
-				':Sucursal'     => $Sucursal,
-				':Componentes'  => $Componentes,
-				':Reparacion'   => $Reparacion
-			]);
-
-			if(!$ok){
-				return ["success"=>false,"tipo"=>"simple","titulo"=>"Error","texto"=>"No se pudo registrar la ODS.","icono"=>"error"];
-			}
-
-			$idInsertado = (int)$pdo->lastInsertId();
-
-			// Prepara la respuesta JSON que el script SÍ entiende
-			$respuesta = [
-				"success" => true,
-				"id" => $idInsertado
-			];
-
-			echo json_encode($respuesta);
-			exit();
-
-		} */
-        //return json_encode($alerta);
 		public function registrarOdsControlador(){
         
         // --- INICIO: FORZAR ERRORES (Solo para depurar) ---
@@ -304,322 +165,92 @@ $Costorep = implode(', ', $costorep_items);
             "id" => $idInsertado
         ];
     }
-		/*----------  Controlador listar ODS  ----------*/
+		/*----------  Controlador listar ODS ----------*/
 		public function listarOdsControlador($pagina,$registros,$url,$busqueda){
 
 			$pagina=$this->limpiarCadena($pagina);
 			$registros=$this->limpiarCadena($registros);
-
 			$url=$this->limpiarCadena($url);
 			$url=APP_URL.$url."/";
-
 			$busqueda=$this->limpiarCadena($busqueda);
 			$tabla="";
 
 			$pagina = (isset($pagina) && $pagina>0) ? (int) $pagina : 1;
 			$inicio = ($pagina>0) ? (($pagina * $registros)-$registros) : 0;
 
-			$campo = $_SESSION['odsSearch_campo'] ?? 'Idods';
-
-			// validar campo permitido
-			$campos_validos = ['Idods'];
-				if (!in_array($campo, $campos_validos)) {
-    		$campo = 'Idods';
-			}
-
+			// 1. CONSULTAS SQL
 			if(isset($busqueda) && $busqueda!=""){
-				$consulta_datos = "
-					SELECT  o.*,
-							c.Nombre AS cliente_nombre,
-							p.Nombre         AS asesor_nombre,
-							p2.Nombre        AS tecnico_nombre
-					FROM ods o
-					LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
-					LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
-					LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
-					WHERE o.$campo LIKE '%$busqueda%'
-					ORDER BY o.Idods DESC
-					LIMIT $inicio,$registros
-				";
-				$consulta_total = "SELECT COUNT(o.Idods)
+				$consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
 								FROM ods o
-								WHERE o.$campo LIKE '%$busqueda%'";
+								LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+								LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+								LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+								WHERE (o.Idods LIKE '%$busqueda%' OR c.Nombre LIKE '%$busqueda%')
+								ORDER BY o.Idods DESC LIMIT $inicio,$registros";
+
+				$consulta_total = "SELECT COUNT(o.Idods) FROM ods o 
+								LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+								WHERE (o.Idods LIKE '%$busqueda%' OR c.Nombre LIKE '%$busqueda%')";
 			}else{
-				$consulta_datos = "
-					SELECT  o.*,
-							c.Nombre AS cliente_nombre,
-							p.Nombre         AS asesor_nombre,
-							p2.Nombre        AS tecnico_nombre
-					FROM ods o
-					LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
-					LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
-					LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
-					ORDER BY o.Idods DESC
-					LIMIT $inicio,$registros
-				";
+				$consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
+								FROM ods o
+								LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+								LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+								LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+								ORDER BY o.Idods DESC LIMIT $inicio,$registros";
 				$consulta_total = "SELECT COUNT(o.Idods) FROM ods o";
 			}
 
 			$datos = $this->ejecutarConsulta($consulta_datos);
 			$datos = $datos->fetchAll();
-
 			$total = $this->ejecutarConsulta($consulta_total);
 			$total = (int) $total->fetchColumn();
-
-			$numeroPaginas =ceil($total/$registros);
-			
-			$tabla.='
-		        <div class="table-container">
-		        <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth">
-		            <thead>
-		                <tr>
-		                    <th class="has-text-centered">ID ODS</th>
-		                    <th class="has-text-centered">Cliente</th>
-		                    <th class="has-text-centered">Asesor</th>
-							<th class="has-text-centered">Tecnico</th>
-		                    <th class="has-text-centered">Status</th>
-		                    <th class="has-text-centered">Tipo</th>
-							<th class="has-text-centered">Marca</th>
-							<th class="has-text-centered">Modelo</th>
-							<th class="has-text-centered">Noserie</th>
-							<th class="has-text-centered">Color</th>
-							<th class="has-text-centered">Contrasena</th>
-							<th class="has-text-centered">Ods Anterior</th>
-							<th class="has-text-centered">Respaldo</th>
-							<th class="has-text-centered">Uso</th>
-							<th class="has-text-centered">Carpeta</th>
-							<th class="has-text-centered">Problema</th>
-							<th class="has-text-centered">Inspeccion</th>
-							<th class="has-text-centered">Accesorios</th>
-							<th class="has-text-centered">Fecha</th>
-							<th class="has-text-centered">Hora</th>
-							<th class="has-text-centered">Tiempo</th>
-							<th class="has-text-centered">Total</th>
-							<th class="has-text-centered">Descuento</th>
-							<th class="has-text-centered">Autorizo</th>
-							<th class="has-text-centered">Cuenta</th>
-							<th class="has-text-centered">Resto</th>
-							<th class="has-text-centered">Reparacion</th>
-							<th class="has-text-centered">Costorep</th>
-							<th class="has-text-centered">Presupuesto</th>
-							<th class="has-text-centered">Iva</th>
-							<th class="has-text-centered">Entrego</th>
-							<th class="has-text-centered">Fechaentrega</th>
-							<th class="has-text-centered">Recordatorio</th>
-							<th class="has-text-centered">Garantia</th>
-							<th class="has-text-centered">Sucursal</th>
-							<th class="has-text-centered">Componentes</th>
-		                    <th class="has-text-centered">Actualizar</th>
-		                    <th class="has-text-centered">Eliminar</th>
-		                </tr>
-		            </thead>
-		            <tbody>
-		    ';
-
-		    if($total>=1 && $pagina<=$numeroPaginas){
-				$contador=$inicio+1;
-				$pag_inicio=$inicio+1;
-				foreach($datos as $rows){
-					$tabla.='
-						<tr class="has-text-centered" >
-							<td>
-								'.$rows['Idods'].'
-								<a href="'.APP_URL.'odsView/'.$rows['Idods'].'/" class="button is-small is-link" title="Ver ODS">
-									<i class="fas fa-eye"></i>
-								</a>
-							</td>
-							<td>'.$rows['cliente_nombre'].'</td>
-							<td>'.$rows['asesor_nombre'].'</td>
-							<td>'.$rows['tecnico_nombre'].'</td>
-							<td>
-                        	<div class="select is-rounded">
-							<select name="Status" class="status-dropdown" onchange="abrirModalNotificacion('.$rows['Idods'].', this.value)">
-								<option value="Recepcion" '.($rows['Status'] == 'Recepcion' ? 'selected' : '').'>Recepcion</option>
-                                <option value="Presupuesto" '.($rows['Status'] == 'Presupuesto' ? 'selected' : '').'>Presupuesto</option>
-                                <option value="Autorizacion" '.($rows['Status'] == 'Autorizacion' ? 'selected' : '').'>Autorizacion</option>
-								<option value="Reparacion" '.($rows['Status'] == 'Reparacion' ? 'selected' : '').'>Reparacion</option>
-                                <option value="StandBy" '.($rows['Status'] == 'StandBy' ? 'selected' : '').'>StandBy</option>
-								<option value="LEntregar" '.($rows['Status'] == 'LEntregar' ? 'selected' : '').'>LEntregar</option>
-                                <option value="Entregado" '.($rows['Status'] == 'Entregado' ? 'selected' : '').'>Entregado</option>
-                            </select>
-                        	</div>
-							<!-- 🔘 Botón para abrir el modal de notificación -->
-							<button class="button is-small is-info mt-2 js-modal-trigger"
-								data-target="modalNotificacion"
-								onclick="prepararModalODS('.$rows['Idods'].', this.closest(\'td\').querySelector(\'select\'))"
-								disabled>
-								Notificar
-							</button>
-                    		</td>
-							<td>'.$rows['Tipo'].'</td>
-							<td>'.$rows['Marca'].'</td>
-							<td>'.$rows['Modelo'].'</td>
-							<td>'.$rows['Noserie'].'</td>
-							<td>'.$rows['Color'].'</td>
-							<td>'.$rows['Contrasena'].'</td>
-							<td>'.$rows['Odsanterior'].'</td>
-							<td>'.$rows['Respaldo'].'</td>
-							<td>'.$rows['Uso'].'</td>
-							<td>'.$rows['Carpeta'].'</td>
-							<td>'.$rows['Problema'].'</td>
-							<td>'.$rows['Inspeccion'].'</td>
-							<td>'.$rows['Accesorios'].'</td>
-							<td>'.$rows['Fecha'].'</td>
-							<td>'.$rows['Hora'].'</td>
-							<td>'.$rows['Tiempo'].'</td>
-							<td>'.$rows['Total'].'</td>
-							<td>'.$rows['Descuento'].'</td>
-							<td>'.$rows['Autorizo'].'</td>
-							<td>'.$rows['Cuenta'].'</td>
-							<td>'.$rows['Resto'].'</td>
-							<td>'.$rows['Reparacion'].'</td>
-							<td>'.$rows['Costorep'].'</td>
-							<td>'.$rows['Presupuesto'].'</td>
-							<td>'.$rows['Iva'].'</td>
-							<td>'.$rows['Entrego'].'</td>
-							<td>'.$rows['Fechaentrega'].'</td>
-							<td>'.$rows['Recordatorio'].'</td>
-							<td>'.$rows['Garantia'].'</td>
-							<td>'.$rows['Sucursal'].'</td>
-							<td>'.$rows['Componentes'].'</td>
-							
-			                <td>
-			                    <a href="'.APP_URL.'odsUpdate/'.$rows['Idods'].'/" class="button is-success is-rounded is-small">
-			                    	<i class="fas fa-sync fa-fw"></i>
-			                    </a>
-			                </td>
-			                <td>
-			                	<form class="FormularioAjax" action="'.APP_URL.'app/ajax/categoriaAjax.php" method="POST" autocomplete="off" >
-
-			                		<input type="hidden" name="modulo_ods" value="eliminar">
-			                		<input type="hidden" name="Idods" value="'.$rows['Idods'].'">
-
-			                    	<button type="submit" class="button is-danger is-rounded is-small">
-			                    		<i class="far fa-trash-alt fa-fw"></i>
-			                    	</button>
-			                    </form>
-			                </td>
-						</tr>
-					';
-					$contador++;
-				}
-				$pag_final=$contador-1;
-			}else{
-				if($total>=1){
-					$tabla.='
-						<tr class="has-text-centered" >
-			                <td colspan="6">
-			                    <a href="'.$url.'1/" class="button is-link is-rounded is-small mt-4 mb-4">
-			                        Haga clic acá para recargar el listado
-			                    </a>
-			                </td>
-			            </tr>
-					';
-				}else{
-					$tabla.='
-						<tr class="has-text-centered" >
-			                <td colspan="6">
-			                    No hay registros en el sistema
-			                </td>
-			            </tr>
-					';
-				}
-			}
-			$tabla.='</tbody></table></div>';
-			### Paginacion ###
-			if($total>0 && $pagina<=$numeroPaginas){
-				$tabla.='<p class="has-text-right">Mostrando ODS <strong>'.$pag_inicio.'</strong> al <strong>'.$pag_final.'</strong> de un <strong>total de '.$total.'</strong></p>';
-
-				$tabla.=$this->paginadorTablas($pagina,$numeroPaginas,$url,7);
-			}
-			return $tabla;
-		}
- 		/* para hacer la búsqueda desde dashboard*/
-		public function listarDashboardControlador($pagina,$registros,$url,$busqueda){
-
-			$pagina=$this->limpiarCadena($pagina);
-			$registros=$this->limpiarCadena($registros);
-
-			$url=$this->limpiarCadena($url);
-			$url=APP_URL.$url."/";
-
-			$busqueda=$this->limpiarCadena($busqueda);
-			$tabla="";
-
-			$pagina = (isset($pagina) && $pagina>0) ? (int) $pagina : 1;
-			$inicio = ($pagina>0) ? (($pagina * $registros)-$registros) : 0;
-
-			$campo = $_SESSION['dashboard_campo'] ?? 'Idods';
-
-			$consulta_datos = "";
-			$consulta_total = "";
-
-			if(isset($busqueda) && $busqueda!=""){
-
-				$consulta_datos = "
-					SELECT 
-						o.*, 
-						c.Nombre AS NombreCliente, 
-						p.Nombre AS NombreAsesor
-					FROM ods o
-					INNER JOIN clientes c ON o.Idcliente = c.Idcliente
-					LEFT JOIN personal p ON o.Idasesor = p.Idasesor
-					WHERE o.Idods = '$busqueda' 
-					OR c.Nombre = '$busqueda' 
-					OR c.Numero = '$busqueda' 
-					ORDER BY o.Idods DESC 
-					LIMIT $inicio, $registros
-				";
-
-				$consulta_total="
-					SELECT COUNT(*) 
-					FROM ods o
-					INNER JOIN clientes c ON o.Idcliente = c.Idcliente
-					WHERE o.Idods = '$busqueda' 
-					OR c.Nombre = '$busqueda' 
-					OR c.Numero = '$busqueda' 
-					ORDER BY o.Idods DESC 
-					LIMIT $inicio, $registros
-				";
-
-				$consulta_total="
-					SELECT COUNT(*) 
-					FROM ods o
-					INNER JOIN clientes c ON o.Idcliente = c.Idcliente
-					WHERE o.Idods = '$busqueda' 
-					OR c.Nombre = '$busqueda' 
-					OR c.Numero = '$busqueda'
-				";
-
-			}else{
-				$consulta_datos="SELECT * FROM ods ORDER BY Idods ASC LIMIT $inicio,$registros";
-				$consulta_total="SELECT COUNT(Idods) FROM ods";
-			}
-
-			$datos = $this->ejecutarConsulta($consulta_datos);
-			$datos = $datos->fetchAll();
-
-			$total = $this->ejecutarConsulta($consulta_total);
-			$total = (int) $total->fetchColumn();
-
 			$numeroPaginas =ceil($total/$registros);
 
+			// 2. ESTILOS CSS (Solo para el status)
 			$tabla.='
-				<div class="table-container">
-				<table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth">
+			<style>
+				.estado-recepcion   { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important; color: white !important; }
+				.estado-diagnostico { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important; color: white !important; }
+				.estado-presupuesto { background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%) !important; color: white !important; }
+				.estado-autorizacion{ background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important; color: white !important; }
+				.estado-standby     { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important; color: white !important; }
+				.estado-reparacion  { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: white !important; }
+				.estado-refacciones { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; color: white !important; }
+				.estado-listoe      { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: white !important; }
+				.estado-almacen     { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important; color: white !important; }
+				.estado-entregado   { background: linear-gradient(135deg, #facc15 0%, #eab308 100%) !important; color: #444 !important; }
+				.estado-seguimiento { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; color: white !important; }
+				.estado-cancelado   { background: linear-gradient(135deg, #6b7280 0%, #374151 100%) !important; color: white !important; }
+				
+				select.status-dropdown {
+					width: 135px !important;
+					height: 30px !important; 
+					font-weight: 600;
+					font-size: 0.85rem !important;
+					padding-top: 0; padding-bottom: 0; padding-left: 10px;
+					border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+					transition: all 0.3s ease;
+				}
+				select.status-dropdown option { background-color: white; color: #333; font-weight: normal; }
+				.select.is-rounded { height: 30px !important; width: auto !important; }
+			</style>
+
+			<div class="table-container">
+				<table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth" style="font-family: \'Segoe UI\', system-ui, sans-serif; font-size: 1.05rem;">
 					<thead>
-						<tr>
-							<th class="has-text-centered">Ver ODS</th>
-							<th class="has-text-centered">ID ODS</th>
-							<th class="has-text-centered">ID Cliente</th>
-							<th class="has-text-centered">ID Asesor</th>
+						<tr style="background-color: #f9fafb; color: #6b7280; text-transform: uppercase; font-size: 1rem;">
+							<th class="has-text-centered">ODS</th>
+							<th class="has-text-centered">Cliente</th>
+							<th class="has-text-centered">Asesor</th>
+							<th class="has-text-centered">Tecnico</th>
 							<th class="has-text-centered">Status</th>
 							<th class="has-text-centered">Tipo</th>
 							<th class="has-text-centered">Marca</th>
-							<th class="has-text-centered">Problema</th>
 							<th class="has-text-centered">Fecha</th>
-							<th class="has-text-centered">Actualizar</th>
-							<th class="has-text-centered">Eliminar</th>
+							<th class="has-text-centered">Total</th>
+							<th class="has-text-centered">Cuenta</th>
+							<th class="has-text-centered">Fecha Entrega</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -628,36 +259,64 @@ $Costorep = implode(', ', $costorep_items);
 			if($total>=1 && $pagina<=$numeroPaginas){
 				$contador=$inicio+1;
 				$pag_inicio=$inicio+1;
+				
 				foreach($datos as $rows){
+					
+					// PREPARAR STATUS (Colores)
+					$st = mb_strtoupper($rows['Status'], 'UTF-8');
+					$claseColor = '';
+					if($st == "RECEPCION")     $claseColor = 'estado-recepcion';
+					elseif($st == "DIAGNOSTICO") $claseColor = 'estado-diagnostico';
+					elseif($st == "PRESUPUESTO") $claseColor = 'estado-presupuesto';
+					elseif($st == "AUTORIZACION")$claseColor = 'estado-autorizacion';
+					elseif($st == "REPARACION")  $claseColor = 'estado-reparacion';
+					elseif($st == "REFACCIONES") $claseColor = 'estado-refacciones';
+					elseif($st == "STANDBY")     $claseColor = 'estado-standby';
+					elseif($st == "ALMACEN")     $claseColor = 'estado-almacen';
+					elseif($st == "LISTOE" || $st == "LENTREGAR") $claseColor = 'estado-listoe';
+					elseif($st == "ENTREGADO")   $claseColor = 'estado-entregado';
+					elseif($st == "SEGUIMIENTO") $claseColor = 'estado-seguimiento';
+					elseif($st == "CANCELADO")   $claseColor = 'estado-cancelado';
+					
 					$tabla.='
-						<tr class="has-text-centered">
+						<tr class="has-text-centered" >
 							<td>
-								<a href="'.APP_URL.'odsView/'.$rows['Idods'].'/" class="button is-small is-link" title="Ver ODS">
+								'.$rows['Idods'].'
+								<a href="'.APP_URL.'odsView/'.$rows['Idods'].'/" target="_blank" class="button is-small is-link" title="Ver ODS">
 									<i class="fas fa-eye"></i>
 								</a>
 							</td>
-							<td>'.$rows['Idods'].'</td>
-							<td>'.$rows['Idcliente'].'</td>
-							<td>'.$rows['NombreAsesor'].'</td>
-							<td>'.$rows['Status'].'</td>
+							<td>'.$rows['cliente_nombre'].'</td>
+							<td>'.$rows['asesor_nombre'].'</td>
+							
+							<td>'.$rows['tecnico_nombre'].'</td>
+
+							<td>
+								<div class="select is-rounded">
+									<select name="Status" class="status-dropdown '.$claseColor.'" 
+											onchange="actualizarStatusDirecto('.$rows['Idods'].', this.value)">
+										<option value="Recepcion"    '.($st == "RECEPCION"    ? 'selected' : '').'>Recepción</option>
+										<option value="Diagnostico"  '.($st == "DIAGNOSTICO"  ? 'selected' : '').'>Diagnóstico</option>
+										<option value="Presupuesto"  '.($st == "PRESUPUESTO"  ? 'selected' : '').'>Presupuesto</option>
+										<option value="Autorizacion" '.($st == "AUTORIZACION" ? 'selected' : '').'>Autorización</option>
+										<option value="Reparacion"   '.($st == "REPARACION"   ? 'selected' : '').'>Reparación</option>
+										<option value="Refacciones"  '.($st == "REFACCIONES"  ? 'selected' : '').'>Refacciones</option>
+										<option value="StandBy"      '.($st == "STANDBY"      ? 'selected' : '').'>StandBy</option>
+										<option value="Almacen"      '.($st == "ALMACEN"      ? 'selected' : '').'>Almacén</option>
+										<option value="Listoe"       '.($st == "LISTOE" || $st == "LENTREGAR" ? 'selected' : '').'>Listo para Entregar</option>
+										<option value="Entregado"    '.($st == "ENTREGADO"    ? 'selected' : '').'>Entregado</option>
+										<option value="Seguimiento"  '.($st == "SEGUIMIENTO"  ? 'selected' : '').'>Seguimiento</option>
+										<option value="Cancelado"    '.($st == "CANCELADO"    ? 'selected' : '').'>Cancelado</option>
+									</select>
+								</div>
+							</td>
+
 							<td>'.$rows['Tipo'].'</td>
 							<td>'.$rows['Marca'].'</td>
-							<td>'.$rows['Problema'].'</td>
 							<td>'.$rows['Fecha'].'</td>
-							<td>
-								<a href="'.APP_URL.'odsUpdate/'.$rows['Idods'].'/" class="button is-success is-rounded is-small">
-									<i class="fas fa-sync fa-fw"></i>
-								</a>
-							</td>
-							<td>
-								<form class="FormularioAjax" action="'.APP_URL.'app/ajax/categoriaAjax.php" method="POST" autocomplete="off">
-									<input type="hidden" name="modulo_ods" value="eliminar">
-									<input type="hidden" name="Idods" value="'.$rows['Idods'].'">
-									<button type="submit" class="button is-danger is-rounded is-small">
-										<i class="far fa-trash-alt fa-fw"></i>
-									</button>
-								</form>
-							</td>
+							<td>$'.$rows['Total'].'</td>
+							<td>$'.$rows['Cuenta'].'</td>
+							<td>'.$rows['Fechaentrega'].'</td>
 						</tr>
 					';
 					$contador++;
@@ -666,7 +325,7 @@ $Costorep = implode(', ', $costorep_items);
 			}else{
 				if($total>=1){
 					$tabla.='
-						<tr class="has-text-centered">
+						<tr class="has-text-centered" >
 							<td colspan="13">
 								<a href="'.$url.'1/" class="button is-link is-rounded is-small mt-4 mb-4">
 									Haga clic acá para recargar el listado
@@ -676,7 +335,7 @@ $Costorep = implode(', ', $costorep_items);
 					';
 				}else{
 					$tabla.='
-						<tr class="has-text-centered">
+						<tr class="has-text-centered" >
 							<td colspan="13">
 								No hay registros en el sistema
 							</td>
@@ -684,16 +343,214 @@ $Costorep = implode(', ', $costorep_items);
 					';
 				}
 			}
-
 			$tabla.='</tbody></table></div>';
-
+			
 			if($total>0 && $pagina<=$numeroPaginas){
 				$tabla.='<p class="has-text-right">Mostrando ODS <strong>'.$pag_inicio.'</strong> al <strong>'.$pag_final.'</strong> de un <strong>total de '.$total.'</strong></p>';
 				$tabla.=$this->paginadorTablas($pagina,$numeroPaginas,$url,7);
 			}
-
 			return $tabla;
 		}
+		
+ 		/* para hacer la búsqueda desde dashboard*/
+		public function listarDashboardControlador($pagina, $registros, $url, $busqueda, $filtroEstado = "") {
+    
+    // 1. LIMPIEZA
+    $pagina = $this->limpiarCadena($pagina);
+    $registros = $this->limpiarCadena($registros);
+    $url = $this->limpiarCadena($url);
+    $url = APP_URL . $url . "/";
+    $busqueda = $this->limpiarCadena($busqueda);
+    $filtroEstado = $this->limpiarCadena($filtroEstado);
+    $tabla = "";
+
+    $pagina = (isset($pagina) && $pagina > 0) ? (int) $pagina : 1;
+    $inicio = (isset($pagina) && $pagina > 0) ? (($pagina * $registros) - $registros) : 0;
+    
+    // --- [FILTROS DE SESIÓN] ---
+    $idUser = $_SESSION['id'] ?? 0;
+    
+    // FILTRO ESTRICTO: Solo donde SOY EL ASESOR (ni técnico ni nada más)
+    $condicionUsuario = " AND o.Idasesor = '$idUser' ";
+
+    // Filtro Estatus
+    $condicionStatus = "";
+    if($filtroEstado != "" && $filtroEstado != "Todos"){
+        $condicionStatus = " AND o.Status = '$filtroEstado' ";
+    }
+
+    // 2. CONSULTAS SQL
+    if (isset($busqueda) && $busqueda != "") {
+        $consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
+                           FROM ods o
+                           LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+                           LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+                           LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+                           WHERE (o.Idods LIKE '%$busqueda%' OR c.Nombre LIKE '%$busqueda%') 
+                           $condicionUsuario 
+                           $condicionStatus
+                           ORDER BY o.Idods DESC LIMIT $inicio,$registros";
+
+        $consulta_total = "SELECT COUNT(o.Idods) FROM ods o
+                           LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+                           WHERE (o.Idods LIKE '%$busqueda%' OR c.Nombre LIKE '%$busqueda%')
+                           $condicionUsuario 
+                           $condicionStatus";
+    } else {
+        $consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
+                           FROM ods o
+                           LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+                           LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+                           LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+                           WHERE 1=1 
+                           $condicionUsuario 
+                           $condicionStatus
+                           ORDER BY o.Idods DESC LIMIT $inicio,$registros";
+
+        $consulta_total = "SELECT COUNT(o.Idods) FROM ods o 
+                           WHERE 1=1 
+                           $condicionUsuario 
+                           $condicionStatus";
+    }
+
+    $datos = $this->ejecutarConsulta($consulta_datos);
+    $datos = $datos->fetchAll();
+    $total = $this->ejecutarConsulta($consulta_total);
+    $total = (int) $total->fetchColumn();
+    $numeroPaginas = ceil($total / $registros);
+    
+    // 3. ESTILOS CSS (Copiado EXACTO de tu dashboardTec)
+    $tabla.='
+    <style>
+        .estado-recepcion    { background-image: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important; color: white !important; }
+        .estado-diagnostico  { background-image: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important; color: white !important; }
+        .estado-presupuesto  { background-image: linear-gradient(135deg, #a855f7 0%, #9333ea 100%) !important; color: white !important; }
+        .estado-autorizacion { background-image: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important; color: white !important; }
+        .estado-standby      { background-image: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important; color: white !important; }
+        .estado-reparacion   { background-image: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: white !important; }
+        .estado-refacciones  { background-image: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; color: white !important; }
+        .estado-listoe       { background-image: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: white !important; }
+        .estado-almacen      { background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important; color: white !important; }
+        .estado-entregado    { background-image: linear-gradient(135deg, #facc15 0%, #eab308 100%) !important; color: #374151 !important; }
+        .estado-cancelado    { background-image: linear-gradient(135deg, #6b7280 0%, #374151 100%) !important; color: white !important; }
+        
+        select.status-dropdown { width: 135px !important; height: 30px !important; font-weight: 600; font-size: 0.85rem !important; padding-left: 10px; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+        select.status-dropdown option { background-color: white; color: #333; font-weight: normal; }
+        .select.is-rounded { height: 30px !important; width: auto !important; }
+
+        .badge-tiempo { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 12px; white-space: nowrap; display: inline-block; width: 100%; }
+        .tiempo-verde { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .tiempo-amarillo { background-color: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        .tiempo-rojo { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .tiempo-finalizado { background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+    </style>
+
+    <div class="table-container">
+        <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth" style="font-family: \'Segoe UI\', system-ui, sans-serif; font-size: 0.95rem;">
+            <thead>
+                <tr style="background-color: #f9fafb; color: #6b7280; text-transform: uppercase; font-size: 0.85rem;">
+                    <th class="has-text-centered">ODS</th>
+                    <th class="has-text-centered">Cliente</th>
+                    <th class="has-text-centered">Asesor</th>
+                    <th class="has-text-centered">Tecnico</th>
+                    <th class="has-text-centered">Status</th>
+                    <th class="has-text-centered">Antigüedad</th>
+                    <th class="has-text-centered">Tipo</th>
+                    <th class="has-text-centered">Marca</th>
+                    <th class="has-text-centered">Fecha Ingreso</th>
+                </tr>
+            </thead>
+            <tbody>
+    ';
+
+    if ($total >= 1 && $pagina <= $numeroPaginas) {
+        $contador = $inicio + 1;
+        $pag_inicio = $inicio + 1;
+        
+        foreach ($datos as $rows) {
+            $st = mb_strtoupper($rows['Status'], 'UTF-8');
+            $claseColor = '';
+            if(strpos($st, "RECEPC") !== false) $claseColor = 'estado-recepcion';
+            elseif(strpos($st, "DIAGN") !== false) $claseColor = 'estado-diagnostico';
+            elseif(strpos($st, "PRESUP") !== false) $claseColor = 'estado-presupuesto';
+            elseif(strpos($st, "AUTORIZ")!== false)$claseColor = 'estado-autorizacion';
+            elseif(strpos($st, "REPARA") !== false)  $claseColor = 'estado-reparacion';
+            elseif(strpos($st, "REFACC") !== false) $claseColor = 'estado-refacciones';
+            elseif(strpos($st, "STAND")  !== false) $claseColor = 'estado-standby';
+            elseif(strpos($st, "ALMAC")  !== false) $claseColor = 'estado-almacen';
+            elseif(strpos($st, "LIST")   !== false) $claseColor = 'estado-listoe';
+            elseif(strpos($st, "ENTREG") !== false) $claseColor = 'estado-entregado';
+            elseif(strpos($st, "SEGUIM") !== false) $claseColor = 'estado-seguimiento';
+            elseif(strpos($st, "CANCEL") !== false) $claseColor = 'estado-cancelado';
+
+            // Antigüedad
+            $textoTiempo = ""; $claseTiempo = "";
+            if ($rows['Fechaentrega'] != "" && $rows['Fechaentrega'] != "0000-00-00" && $rows['Fechaentrega'] != NULL) {
+                $textoTiempo = '<i class="fas fa-check"></i> Entregado'; $claseTiempo = "tiempo-finalizado";
+            } else {
+                $fechaIngreso = new \DateTime($rows['Fecha']);
+                $fechaHoy     = new \DateTime();
+                $diferencia   = $fechaIngreso->diff($fechaHoy);
+                $dias = $diferencia->days;
+                if ($dias <= 7) { $textoTiempo = $dias . " días"; $claseTiempo = "tiempo-verde"; } 
+                elseif ($dias <= 30) { $textoTiempo = floor($dias / 7) . " sem"; $claseTiempo = "tiempo-amarillo"; } 
+                else { $textoTiempo = floor($dias / 30) . " mes"; $claseTiempo = "tiempo-rojo"; }
+            }
+
+            $tabla .= '
+                <tr class="has-text-centered" >
+                    <td>
+                        ' . $rows['Idods'] . '
+                        <a href="' . APP_URL . 'odsView/' . $rows['Idods'] . '/" target="_blank" class="button is-small is-link" title="Ver ODS">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                    <td>' . $rows['cliente_nombre'] . '</td>
+                    <td>' . $rows['asesor_nombre'] . '</td>
+                    <td>' . $rows['tecnico_nombre'] . '</td>
+                    <td>
+                        <div class="select is-rounded">
+                            <select name="Status" class="status-dropdown '.$claseColor.'" 
+                                    onchange="actualizarStatusDirecto('.$rows['Idods'].', this.value)">
+                                <option value="Recepcion"    '.($st == "RECEPCION"    ? 'selected' : '').'>Recepción</option>
+                                <option value="Diagnostico"  '.($st == "DIAGNOSTICO"  ? 'selected' : '').'>Diagnóstico</option>
+                                <option value="Presupuesto"  '.($st == "PRESUPUESTO"  ? 'selected' : '').'>Presupuesto</option>
+                                <option value="Autorizacion" '.($st == "AUTORIZACION" ? 'selected' : '').'>Autorización</option>
+                                <option value="Reparacion"   '.($st == "REPARACION"   ? 'selected' : '').'>Reparación</option>
+                                <option value="Refacciones"  '.($st == "REFACCIONES"  ? 'selected' : '').'>Refacciones</option>
+                                <option value="StandBy"      '.($st == "STANDBY"      ? 'selected' : '').'>StandBy</option>
+                                <option value="Almacen"      '.($st == "ALMACEN"      ? 'selected' : '').'>Almacén</option>
+                                <option value="Listoe"       '.($st == "LISTOE" || $st == "LENTREGAR" ? 'selected' : '').'>Listo para Entregar</option>
+                                <option value="Entregado"    '.($st == "ENTREGADO"    ? 'selected' : '').'>Entregado</option>
+                                <option value="Seguimiento"  '.($st == "SEGUIMIENTO"  ? 'selected' : '').'>Seguimiento</option>
+                                <option value="Cancelado"    '.($st == "CANCELADO"    ? 'selected' : '').'>Cancelado</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td><div class="badge-tiempo '.$claseTiempo.'"><i class="far fa-clock"></i> '.$textoTiempo.'</div></td>
+                    <td>' . $rows['Tipo'] . '</td>
+                    <td>' . $rows['Marca'] . '</td>
+                    <td>' . $rows['Fecha'] . '</td>
+                </tr>
+            ';
+            $contador++;
+        }
+        $pag_final = $contador - 1;
+    } else {
+        if ($total >= 1) {
+            $tabla .= '<tr class="has-text-centered"><td colspan="14"><a href="' . $url . '1/" class="button is-link is-rounded is-small mt-4 mb-4">Recargar listado</a></td></tr>';
+        } else {
+            $tabla .= '<tr class="has-text-centered"><td colspan="14"><div class="has-text-grey p-4"><i class="fas fa-folder-open fa-2x mb-2"></i><br>No se encontraron registros.</div></td></tr>';
+        }
+    }
+    $tabla .= '</tbody></table></div>';
+    
+    if ($total > 0 && $pagina <= $numeroPaginas) {
+        $tabla .= '<p class="has-text-right">Mostrando ODS <strong>' . $pag_inicio . '</strong> al <strong>' . $pag_final . '</strong> de un <strong>total de ' . $total . '</strong></p>';
+        $tabla .= $this->paginadorTablas($pagina, $numeroPaginas, $url, 7);
+    }
+    return $tabla;
+}
 
 		/*----------  Controlador eliminar ods  ----------*/
 		public function eliminarOdsControlador(){
@@ -999,222 +856,224 @@ $Costorep = implode(', ', $costorep_items);
 		}
 
 		// Cambiar status
-		public function cambiarStatusOdsControlador(): array {
+		/* Copia esta función y reemplaza la que tienes en:
+       app/controllers/odsController.php
+    */
+    /* Reemplaza tu función cambiarStatusOdsControlador con esta */
+    public function cambiarStatusOdsControlador(): array {
         try {
+            // 1. Asegurar sesión iniciada
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            }
+
             $pdo   = self::conectar();
             $idods = (int)($_POST['Idods'] ?? 0);
-            $nuevo = trim((string)($_POST['Status'] ?? ''));
+            
+            // CORRECCIÓN: Usamos $this->limpiarCadena correctamente
+            // (Con $this-> y respetando las mayúsculas de tu método)
+            $statusRaw = $_POST['Status'] ?? '';
+            $nuevo = strtoupper($this->limpiarCadena($statusRaw));
 
-            if ($idods<=0 || $nuevo==='') {
-                return ['success'=>false,'msg'=>'Datos incompletos'];
+            if ($idods <= 0 || $nuevo === '') {
+                return ['success' => false, 'msg' => 'Datos incompletos'];
             }
 
-            // 1) Estado actual
+            // 2. Obtener estado actual
             $q = $pdo->prepare("SELECT TRIM(Status) AS s FROM ods WHERE Idods=:id");
-            $q->execute([':id'=>$idods]);
-            $actual = $q->fetchColumn();
+            $q->execute([':id' => $idods]);
+            $actualRaw = $q->fetchColumn();
 
-            if ($actual === false) return ['success'=>false,'msg'=>'ODS no encontrada'];
-            if ($actual === $nuevo) return ['success'=>true,'msg'=>'Sin cambios'];
+            if ($actualRaw === false) return ['success' => false, 'msg' => 'ODS no encontrada'];
+            $actual = strtoupper($actualRaw);
 
-            // 2) Reglas de transición (ajusta a tu flujo)
+            if ($actual === $nuevo) return ['success' => true, 'msg' => 'Sin cambios'];
+
+            // 3. Validar Transición (Tus reglas)
             $permitidas = [
-            'RECEPCION'   => ['RECEPCION','DIAGNOSTICO','REPARACION','CANCELADO'],
-            'DIAGNOSTICO' => ['DIAGNOSTICO','PRESUPUESTO','AUTORIZACION','REPARACION','STANDBY','CANCELADO'],
-            'PRESUPUESTO' => ['PRESUPUESTO','DIAGNOSTICO','STANDBY','AUTORIZACION','CANCELADO'],
-            'STANDBY'     => ['STANDBY','AUTORIZACION','CANCELADO'],
-            'AUTORIZACION'=> ['AUTORIZACION','PRESUPUESTO','REPARACION','CANCELADO'],
-            'REPARACION'  => ['REPARACION','REFACCIONES','STANDBY','LISTOE','CANCELADO'],
-            'REFACCIONES' => ['REFACCIONES','REPARACION','STANDBY','CANCELADO'],
-            'LISTOE'      => ['LISTOE','REPARACION','ENTREGADO','ALMACEN','SEGUIMIENTO','CANCELADO'],
-            'ENTREGADO'   => ['ENTREGADO','SEGUIMIENTO'],
-            'SEGUIMIENTO' => [],
-            'ALMACEN'     => [],
-            'CANCELADO'   => []
-          ];
-            $ok = isset($permitidas[$actual]) ? in_array($nuevo, $permitidas[$actual], true) : true;
-            if (!$ok) return ['success'=>false,'msg'=>"Transición no permitida ($actual → $nuevo)"];
+                'RECEPCION'    => ['RECEPCION','DIAGNOSTICO','PRESUPUESTO','STANDBY','AUTORIZACION','REPARACION','REFACCIONES','LISTOE','ENTREGADO','SEGUIMIENTO','ALMACEN','DBAJA','CANCELADO'],
+                'DIAGNOSTICO'  => ['DIAGNOSTICO','RECEPCION','PRESUPUESTO','STANDBY','AUTORIZACION','REPARACION','REFACCIONES','LISTOE','ENTREGADO','SEGUIMIENTO','ALMACEN','DBAJA','CANCELADO'],
+                'PRESUPUESTO'  => ['PRESUPUESTO','DIAGNOSTICO','STANDBY','AUTORIZACION','REPARACION','REFACCIONES','LISTOE','ENTREGADO','ALMACEN','DBAJA','CANCELADO'],
+                'STANDBY'      => ['STANDBY','PRESUPUESTO','AUTORIZACION','REPARACION','REFACCIONES','LISTOE','ENTREGADO','DBAJA','CANCELADO'],
+                'AUTORIZACION' => ['AUTORIZACION','STANDBY','PRESUPUESTO','REPARACION','REFACCIONES','LISTOE','ENTREGADO','SEGUIMIENTO','ALMACEN','DBAJA','CANCELADO'],
+                'REPARACION'   => ['REPARACION','REFACCIONES','DIAGNOSTICO','PRESUPUESTO','AUTORIZACION','LISTOE','ENTREGADO','ALMACEN','DBAJA','CANCELADO'],
+                'REFACCIONES'  => ['REFACCIONES','REPARACION','STANDBY','LISTOE','ENTREGADO','ALMACEN','DBAJA','CANCELADO'],
+                'LISTOE'       => ['LISTOE','STANDBY','REPARACION','ENTREGADO','ALMACEN','DBAJA','CANCELADO'],
+                'ENTREGADO'    => ['ENTREGADO','REPARACION','SEGUIMIENTO'],
+                'SEGUIMIENTO'  => ['ENTREGADO'],
+                'ALMACEN'      => ['REFACCIONES'],
+                'DBAJA'        => ['DBAJA','SEGUIMIENTO'],
+                'CANCELADO'    => []
+            ];
 
-            // 3) Guardar en transacción + auditar en reportetec
+            $ok = isset($permitidas[$actual]) ? in_array($nuevo, $permitidas[$actual], true) : true;
+            if (!$ok) return ['success' => false, 'msg' => "Transición no permitida ($actual → $nuevo)"];
+
+            // 4. INICIAR TRANSACCIÓN
             $pdo->beginTransaction();
 
-            $up = $pdo->prepare("UPDATE ods SET Status=:st WHERE Idods=:id");
-            $up->execute([':st'=>$nuevo, ':id'=>$idods]);
+            // A. Actualizar ODS
+            $sqlUpdate = "UPDATE ods SET Status=:st";
+            $parametros = [':st' => $nuevo, ':id' => $idods];
 
-            // (Opcional) auditoría/bitácora: reportetec
-            // Ajusta columnas a tu esquema real. Ejemplo minimalista:
-            $usuarioId = $_SESSION['id'] ?? null; // o $_SESSION['id_usuario']
-            if ($usuarioId) {
-                $log = $pdo->prepare("
-                    INSERT INTO reportetec (Idods, Reporte, Tecnico, Fecha)
-                    VALUES (:idods, :reporte, :uid, NOW())
-                ");
-                $texto = "Cambio de status: {$actual} → {$nuevo}";
-                $log->execute([
-                    ':idods'=>$idods,
-                    ':reporte'=>$texto,
-                    ':uid'=>$usuarioId
-                ]);
+            // Detectamos si es una Entrega con datos extra
+            if ($nuevo === 'ENTREGADO' && isset($_POST['Entrego']) && isset($_POST['Fechaentrega'])) {
+                $sqlUpdate .= ", Entrego=:ent, Fechaentrega=:fec";
+                
+                // CORRECCIÓN: Usamos $this->limpiarCadena aquí también
+                $parametros[':ent'] = $this->limpiarCadena($_POST['Entrego']);
+                $parametros[':fec'] = $this->limpiarCadena($_POST['Fechaentrega']);
             }
 
+            $sqlUpdate .= " WHERE Idods=:id";
+            $up = $pdo->prepare($sqlUpdate);
+            $up->execute($parametros);
+
+            // B. Auditoría / Reportetec
+            $usuarioId = $_SESSION['Idasesor'] ?? $_SESSION['id'] ?? $_SESSION['usuario_id'] ?? null;
+            $nombreTecnico = $_SESSION['nombre'] ?? $_SESSION['Nombre'] ?? 'Sistema'; 
+            
+            if(isset($_SESSION['apellido'])) $nombreTecnico .= ' ' . $_SESSION['apellido'];
+
+            if ($usuarioId) {
+                $texto = "Cambio de status: {$actual} → {$nuevo}";
+                $horaActual = date('H:i:s');
+                $log = $pdo->prepare("INSERT INTO reportetec (Idods, Reporte, Tecnico, Fecha, Hora) VALUES (:idods, :reporte, :uid, CURDATE(), :hora)");
+                $log->execute([':idods' => $idods, ':reporte' => $texto, ':uid' => $usuarioId, ':hora' => $horaActual]);
+            }
+
+            // 5. CONFIRMAR CAMBIOS
             $pdo->commit();
-            return ['success'=>true,'msg'=>'Status actualizado','status'=>$nuevo];
+
+            return [
+                'success' => true,
+                'msg'     => 'Status actualizado',
+                'status'  => $nuevo,
+                'tecnico' => $nombreTecnico,
+                'hora'    => date('H:i:s'),
+                'fecha'   => date('Y-m-d')
+            ];
 
         } catch (\Throwable $e) {
             if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
-            return ['success'=>false,'msg'=>'Error: '.$e->getMessage()];
+            return ['success' => false, 'msg' => 'Error: ' . $e->getMessage()];
         }
     }
-
-		public function listarOdsPersonalControlador($pagina, $registros, $url, $busqueda) {
+    /*----------  Controlador listar ODS Personal (CON FILTRO DE FECHAS Y STATUS ROBUSTO)  ----------*/
+	public function listarOdsPersonalControlador($pagina, $registros, $url, $busqueda, $filtroEstado = "") {
+		
 		$pagina = $this->limpiarCadena($pagina);
 		$registros = $this->limpiarCadena($registros);
-
 		$url = $this->limpiarCadena($url);
 		$url = APP_URL . $url . "/";
-
 		$busqueda = $this->limpiarCadena($busqueda);
+		$filtroEstado = $this->limpiarCadena($filtroEstado); // <-- LIMPIEZA AGREGADA
 		$tabla = "";
 
 		$pagina = (isset($pagina) && $pagina > 0) ? (int) $pagina : 1;
-		$inicio = ($pagina > 0) ? (($pagina * $registros) - $registros) : 0;
+		$inicio = (isset($pagina) && $pagina > 0) ? (($pagina * $registros) - $registros) : 0;
+		$campo  = $_SESSION['odsSearch_campo'] ?? 'Idods';
 
-		$campo = $_SESSION['odsSearch_campo'] ?? 'Idods';
+		if (!in_array($campo, ['Idods'])) { $campo = 'Idods'; }
 
-		// validar campo permitido
-		$campos_validos = ['Idods'];
-		if (!in_array($campo, $campos_validos)) {
-			$campo = 'Idods';
-		}
-
-		// Obtener el Idasesor de la sesión
-		//$idAsesorSesion = $_SESSION['id'] ?? 0; // Ajusta según el nombre de tu variable de sesión
-
-		// Agregar condición para filtrar por el asesor en sesión
-		//$filtroAsesor = " AND o.Idasesor = $idAsesorSesion";
-
-		// Obtener el Id del técnico de la sesión (usando el mismo ID de sesión)
+		// FILTROS BASICOS
 		$idTecnicoSesion = $_SESSION['id'] ?? 0;
-
-		// Agregar condición para filtrar por el técnico en sesión
 		$filtroTecnico = " AND o.IdTecnico = $idTecnicoSesion";
 
-		// Obtener lista de técnicos disponibles - COLOCA ESTO AL INICIO DE TU FUNCIÓN
-			$consulta_tecnicos = "
-				SELECT Idasesor, Nombre 
-				FROM personal
-				WHERE Puesto = 'TECNICO' OR Puesto LIKE '%TECNIC%' OR Puesto LIKE '%tecnico%' or Puesto LIKE '%JEFE DE PRODUCCION%'
-				ORDER BY Nombre
-			";
-
-			try {
-				$resultado_tecnicos = $this->ejecutarConsulta($consulta_tecnicos);
-				$tecnicos = $resultado_tecnicos->fetchAll();
-				
-				// Si no hay técnicos, inicializa como array vacío
-				if (!$tecnicos) {
-					$tecnicos = [];
-				}
-				
-			} catch (\Exception $e) {
-				// En caso de error, inicializar como array vacío
-				$tecnicos = [];
-				error_log("Error al cargar técnicos: " . $e->getMessage());
-			}
-
-		if (isset($busqueda) && $busqueda != "") {
-		
-			$consulta_datos = "
-				SELECT  o.*,
-						c.Nombre AS cliente_nombre,
-						p.Nombre         AS asesor_nombre,
-						p2.Nombre        AS tecnico_nombre
-				FROM ods o
-				LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
-				LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
-				LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
-				WHERE o.$campo LIKE '%$busqueda%'
-				$filtroTecnico
-				ORDER BY o.Idods DESC
-				LIMIT $inicio,$registros
-			";
-
-			$consulta_total = "SELECT COUNT(o.Idods)
-							FROM ods o
-							WHERE o.$campo LIKE '%$busqueda%'
-							$filtroTecnico";
+		// --- FILTRO DE ESTADO (MODIFICADO) ---
+		// Si se eligió un estado específico en el select, usamos ese.
+		// Si dice "Todos" o está vacío, usamos la lista de activos por defecto.
+		if($filtroEstado != "" && $filtroEstado != "Todos"){
+			$filtroStatus = " AND o.Status = '$filtroEstado'";
 		} else {
-			$consulta_datos = "
-				SELECT  o.*,
-						c.Nombre AS cliente_nombre,
-						p.Nombre         AS asesor_nombre,
-						p2.Nombre        AS tecnico_nombre
-				FROM ods o
-				LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
-				LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
-				LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
-				WHERE 1=1
-				$filtroTecnico
-				ORDER BY o.Idods DESC
-				LIMIT $inicio,$registros
-			";
-			$consulta_total = "SELECT COUNT(o.Idods) 
-							FROM ods o 
-							WHERE 1=1
-							$filtroTecnico";
+			$filtroStatus = " AND (
+				UPPER(o.Status) LIKE '%REPARACI%' OR 
+				UPPER(o.Status) LIKE '%DIAGN%' OR 
+				UPPER(o.Status) LIKE '%REFACCIONES%'
+			)";
+		}
+		// -------------------------------------
+
+		// Filtro Fechas
+		$filtroFecha = "";
+		if (isset($_SESSION['start_date']) && isset($_SESSION['end_date'])) {
+			$f_inicio = $_SESSION['start_date'];
+			$f_fin    = $_SESSION['end_date'];
+			$filtroFecha = " AND (DATE(o.Fecha) BETWEEN '$f_inicio' AND '$f_fin') ";
+		}
+
+		// SQL
+		if (isset($busqueda) && $busqueda != "") {
+			$consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
+							FROM ods o
+							LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+							LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+							LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+							WHERE o.$campo LIKE '%$busqueda%' $filtroTecnico $filtroStatus $filtroFecha
+							ORDER BY o.Idods DESC LIMIT $inicio,$registros";
+
+			$consulta_total = "SELECT COUNT(o.Idods) FROM ods o 
+							WHERE o.$campo LIKE '%$busqueda%' $filtroTecnico $filtroStatus $filtroFecha";
+		} else {
+			$consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
+							FROM ods o
+							LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+							LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+							LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+							WHERE 1=1 $filtroTecnico $filtroStatus $filtroFecha
+							ORDER BY o.Idods DESC LIMIT $inicio,$registros";
+
+			$consulta_total = "SELECT COUNT(o.Idods) FROM ods o 
+							WHERE 1=1 $filtroTecnico $filtroStatus $filtroFecha";
 		}
 
 		$datos = $this->ejecutarConsulta($consulta_datos);
 		$datos = $datos->fetchAll();
-
 		$total = $this->ejecutarConsulta($consulta_total);
 		$total = (int) $total->fetchColumn();
-
 		$numeroPaginas = ceil($total / $registros);
 		
-		$tabla .= '
-			<div class="table-container">
-			<table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth">
+		// ESTILOS CSS
+		$tabla.='
+		<style>
+			/* DEFINICIÓN DE COLORES EXACTOS */
+			.estado-recepcion    { background-image: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important; color: white !important; }
+			.estado-diagnostico  { background-image: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important; color: white !important; }
+			.estado-presupuesto  { background-image: linear-gradient(135deg, #a855f7 0%, #9333ea 100%) !important; color: white !important; }
+			.estado-autorizacion { background-image: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important; color: white !important; }
+			.estado-standby      { background-image: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important; color: white !important; }
+			.estado-reparacion   { background-image: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: white !important; }
+			.estado-refacciones  { background-image: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; color: white !important; }
+			.estado-listoe       { background-image: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: white !important; }
+			.estado-almacen      { background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important; color: white !important; }
+			.estado-seguimiento  { background-image: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; color: white !important; }
+			.estado-entregado    { background-image: linear-gradient(135deg, #facc15 0%, #eab308 100%) !important; color: #374151 !important; }
+			.estado-cancelado    { background-image: linear-gradient(135deg, #6b7280 0%, #374151 100%) !important; color: white !important; }
+			
+			select.status-dropdown { width: 135px !important; height: 30px !important; font-weight: 600; font-size: 0.85rem !important; padding-left: 10px; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+			select.status-dropdown option { background-color: white; color: #333; font-weight: normal; }
+			.select.is-rounded { height: 30px !important; width: auto !important; }
+
+			.badge-tiempo { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 12px; white-space: nowrap; display: inline-block; width: 100%; }
+			.tiempo-verde { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+			.tiempo-amarillo { background-color: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+			.tiempo-rojo { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+			.tiempo-finalizado { background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+		</style>
+
+		<div class="table-container">
+			<table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth" style="font-family: \'Segoe UI\', system-ui, sans-serif; font-size: 0.95rem;">
 				<thead>
-					<tr>
-						<th class="has-text-centered">ID ODS</th>
+					<tr style="background-color: #f9fafb; color: #6b7280; text-transform: uppercase; font-size: 0.85rem;">
+						<th class="has-text-centered">ODS</th>
 						<th class="has-text-centered">Cliente</th>
 						<th class="has-text-centered">Asesor</th>
 						<th class="has-text-centered">Tecnico</th>
 						<th class="has-text-centered">Status</th>
+						<th class="has-text-centered">Antigüedad</th>
 						<th class="has-text-centered">Tipo</th>
 						<th class="has-text-centered">Marca</th>
-						<th class="has-text-centered">Modelo</th>
-						<th class="has-text-centered">Noserie</th>
-						<th class="has-text-centered">Color</th>
-						<th class="has-text-centered">Contrasena</th>
-						<th class="has-text-centered">Ods Anterior</th>
-						<th class="has-text-centered">Respaldo</th>
-						<th class="has-text-centered">Uso</th>
-						<th class="has-text-centered">Carpeta</th>
-						<th class="has-text-centered">Problema</th>
-						<th class="has-text-centered">Inspeccion</th>
-						<th class="has-text-centered">Accesorios</th>
-						<th class="has-text-centered">Fecha</th>
-						<th class="has-text-centered">Hora</th>
-						<th class="has-text-centered">Tiempo</th>
-						<th class="has-text-centered">Total</th>
-						<th class="has-text-centered">Descuento</th>
-						<th class="has-text-centered">Autorizo</th>
-						<th class="has-text-centered">Cuenta</th>
-						<th class="has-text-centered">Resto</th>
-						<th class="has-text-centered">Reparacion</th>
-						<th class="has-text-centered">Costorep</th>
-						<th class="has-text-centered">Presupuesto</th>
-						<th class="has-text-centered">Iva</th>
-						<th class="has-text-centered">Entrego</th>
-						<th class="has-text-centered">Fechaentrega</th>
-						<th class="has-text-centered">Recordatorio</th>
-						<th class="has-text-centered">Garantia</th>
-						<th class="has-text-centered">Sucursal</th>
-						<th class="has-text-centered">Componentes</th>
-						<th class="has-text-centered">Actualizar</th>
-						<th class="has-text-centered">Eliminar</th>
+						<th class="has-text-centered">Fecha Ingreso</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1223,116 +1082,71 @@ $Costorep = implode(', ', $costorep_items);
 		if ($total >= 1 && $pagina <= $numeroPaginas) {
 			$contador = $inicio + 1;
 			$pag_inicio = $inicio + 1;
+			
 			foreach ($datos as $rows) {
+				$st = mb_strtoupper($rows['Status'], 'UTF-8');
+				$claseColor = '';
+				if(strpos($st, "RECEPC") !== false) $claseColor = 'estado-recepcion';
+				elseif(strpos($st, "DIAGN") !== false) $claseColor = 'estado-diagnostico';
+				elseif(strpos($st, "PRESUP") !== false) $claseColor = 'estado-presupuesto';
+				elseif(strpos($st, "AUTORIZ")!== false)$claseColor = 'estado-autorizacion';
+				elseif(strpos($st, "REPARA") !== false)  $claseColor = 'estado-reparacion';
+				elseif(strpos($st, "REFACC") !== false) $claseColor = 'estado-refacciones';
+				elseif(strpos($st, "STAND")  !== false) $claseColor = 'estado-standby';
+				elseif(strpos($st, "ALMAC")  !== false) $claseColor = 'estado-almacen';
+				elseif(strpos($st, "LIST")   !== false) $claseColor = 'estado-listoe';
+				elseif(strpos($st, "ENTREG") !== false) $claseColor = 'estado-entregado';
+				elseif(strpos($st, "SEGUIM") !== false) $claseColor = 'estado-seguimiento';
+				elseif(strpos($st, "CANCEL") !== false) $claseColor = 'estado-cancelado';
 
-				// Construir las opciones de técnicos para esta fila CON VERIFICACIÓN
-				$opciones_tecnicos = '<option value="">Sin asignar</option>';
-				
-				if (is_array($tecnicos) && count($tecnicos) > 0) {
-					foreach ($tecnicos as $tecnico) {
-						$selected = ($rows['IdTecnico'] == $tecnico['Idasesor']) ? 'selected' : '';
-						$opciones_tecnicos .= '<option value="' . $tecnico['Idasesor'] . '" ' . $selected . '>' . $tecnico['Nombre'] . '</option>';
-					}
+				// Antigüedad (Igual que antes)
+				$textoTiempo = ""; $claseTiempo = "";
+				if ($rows['Fechaentrega'] != "" && $rows['Fechaentrega'] != "0000-00-00" && $rows['Fechaentrega'] != NULL) {
+					$textoTiempo = '<i class="fas fa-check"></i> Entregado'; $claseTiempo = "tiempo-finalizado";
 				} else {
-					// Si no hay técnicos, mostrar solo el técnico actual si existe
-					if (!empty($rows['tecnico_nombre'])) {
-						$opciones_tecnicos .= '<option value="' . $rows['IdTecnico'] . '" selected>' . $rows['tecnico_nombre'] . '</option>';
-					}
+					$fechaIngreso = new \DateTime($rows['Fecha']);
+					$fechaHoy     = new \DateTime();
+					$diferencia   = $fechaIngreso->diff($fechaHoy);
+					$dias = $diferencia->days;
+					if ($dias <= 7) { $textoTiempo = $dias . " días"; $claseTiempo = "tiempo-verde"; } 
+					elseif ($dias <= 30) { $textoTiempo = floor($dias / 7) . " sem"; $claseTiempo = "tiempo-amarillo"; } 
+					else { $textoTiempo = floor($dias / 30) . " mes"; $claseTiempo = "tiempo-rojo"; }
 				}
 
 				$tabla .= '
 					<tr class="has-text-centered" >
 						<td>
 							' . $rows['Idods'] . '
-							<a href="' . APP_URL . 'odsView/' . $rows['Idods'] . '/" class="button is-small is-link" title="Ver ODS">
+							<a href="' . APP_URL . 'odsView/' . $rows['Idods'] . '/" target="_blank" class="button is-small is-link" title="Ver ODS">
 								<i class="fas fa-eye"></i>
 							</a>
 						</td>
 						<td>' . $rows['cliente_nombre'] . '</td>
 						<td>' . $rows['asesor_nombre'] . '</td>
-					
-						<!-- NUEVO DROPDOWN DE TÉCNICOS -->
+						<td>' . $rows['tecnico_nombre'] . '</td>
 						<td>
 							<div class="select is-rounded">
-								<select name="Tecnico" class="tecnico-dropdown" onchange="actualizarTecnico(' . $rows['Idods'] . ', this.value)">
-									<option value="">Sin asignar</option>
-									' . $opciones_tecnicos . '
+								<select name="Status" class="status-dropdown '.$claseColor.'" 
+										onchange="actualizarStatusDirecto('.$rows['Idods'].', this.value)">
+									<option value="Recepcion"    '.($st == "RECEPCION"    ? 'selected' : '').'>Recepción</option>
+									<option value="Diagnostico"  '.($st == "DIAGNOSTICO"  ? 'selected' : '').'>Diagnóstico</option>
+									<option value="Presupuesto"  '.($st == "PRESUPUESTO"  ? 'selected' : '').'>Presupuesto</option>
+									<option value="Autorizacion" '.($st == "AUTORIZACION" ? 'selected' : '').'>Autorización</option>
+									<option value="Reparacion"   '.($st == "REPARACION"   ? 'selected' : '').'>Reparación</option>
+									<option value="Refacciones"  '.($st == "REFACCIONES"  ? 'selected' : '').'>Refacciones</option>
+									<option value="StandBy"      '.($st == "STANDBY"      ? 'selected' : '').'>StandBy</option>
+									<option value="Almacen"      '.($st == "ALMACEN"      ? 'selected' : '').'>Almacén</option>
+									<option value="Listoe"       '.($st == "LISTOE" || $st == "LENTREGAR" ? 'selected' : '').'>Listo para Entregar</option>
+									<option value="Entregado"    '.($st == "ENTREGADO"    ? 'selected' : '').'>Entregado</option>
+									<option value="Seguimiento"  '.($st == "SEGUIMIENTO"  ? 'selected' : '').'>Seguimiento</option>
+									<option value="Cancelado"    '.($st == "CANCELADO"    ? 'selected' : '').'>Cancelado</option>
 								</select>
 							</div>
 						</td>
-						<td>
-						<div class="select is-rounded">
-						<select name="Status" class="status-dropdown" onchange="abrirModalNotificacion(' . $rows['Idods'] . ', this.value)">
-							<option value="Recepcion" ' . ($rows['Status'] == 'Recepcion' ? 'selected' : '') . '>Recepcion</option>
-							<option value="Diagnostico" ' . ($rows['Status'] == 'Diagnostico' ? 'selected' : '') . '>Diagnostico</option>
-							<option value="Presupuesto" ' . ($rows['Status'] == 'Presupuesto' ? 'selected' : '') . '>Presupuesto</option>
-							<option value="StandBy" ' . ($rows['Status'] == 'StandBy' ? 'selected' : '') . '>StandBy</option>
-							<option value="Autorizacion" ' . ($rows['Status'] == 'Autorizacion' ? 'selected' : '') . '>Autorizacion</option>
-							<option value="Reparacion" ' . ($rows['Status'] == 'Reparacion' ? 'selected' : '') . '>Reparacion</option>
-							<option value="Refacciones" ' . ($rows['Status'] == 'Refacciones' ? 'selected' : '') . '>Refacciones</option>
-							<option value="ListoE" ' . ($rows['Status'] == 'ListoE' ? 'selected' : '') . '>ListoE</option>
-							<option value="Entregado" ' . ($rows['Status'] == 'Entregado' ? 'selected' : '') . '>Entregado</option>
-							<option value="Seguimiento" ' . ($rows['Status'] == 'Seguimiento' ? 'selected' : '') . '>Seguimiento</option>
-							<option value="Almacen" ' . ($rows['Status'] == 'Almacen' ? 'selected' : '') . '>Almacen</option>
-							<option value="Cancelado" ' . ($rows['Status'] == 'Cancelado' ? 'selected' : '') . '>Cancelado</option>
-						</select>
-						</div>
-						<!-- 🔘 Botón para abrir el modal de notificación -->
-						<button class="button is-small is-info mt-2 js-modal-trigger"
-							data-target="modalNotificacion"
-							onclick="prepararModalODS(' . $rows['Idods'] . ', this.closest(\'td\').querySelector(\'select\'))"
-							disabled>
-							Notificar
-						</button>
-						</td>
+						<td><div class="badge-tiempo '.$claseTiempo.'"><i class="far fa-clock"></i> '.$textoTiempo.'</div></td>
 						<td>' . $rows['Tipo'] . '</td>
 						<td>' . $rows['Marca'] . '</td>
-						<td>' . $rows['Modelo'] . '</td>
-						<td>' . $rows['Noserie'] . '</td>
-						<td>' . $rows['Color'] . '</td>
-						<td>' . $rows['Contrasena'] . '</td>
-						<td>' . $rows['Odsanterior'] . '</td>
-						<td>' . $rows['Respaldo'] . '</td>
-						<td>' . $rows['Uso'] . '</td>
-						<td>' . $rows['Carpeta'] . '</td>
-						<td>' . $rows['Problema'] . '</td>
-						<td>' . $rows['Inspeccion'] . '</td>
-						<td>' . $rows['Accesorios'] . '</td>
 						<td>' . $rows['Fecha'] . '</td>
-						<td>' . $rows['Hora'] . '</td>
-						<td>' . $rows['Tiempo'] . '</td>
-						<td>' . $rows['Total'] . '</td>
-						<td>' . $rows['Descuento'] . '</td>
-						<td>' . $rows['Autorizo'] . '</td>
-						<td>' . $rows['Cuenta'] . '</td>
-						<td>' . $rows['Resto'] . '</td>
-						<td>' . $rows['Reparacion'] . '</td>
-						<td>' . $rows['Costorep'] . '</td>
-						<td>' . $rows['Presupuesto'] . '</td>
-						<td>' . $rows['Iva'] . '</td>
-						<td>' . $rows['Entrego'] . '</td>
-						<td>' . $rows['Fechaentrega'] . '</td>
-						<td>' . $rows['Recordatorio'] . '</td>
-						<td>' . $rows['Garantia'] . '</td>
-						<td>' . $rows['Sucursal'] . '</td>
-						<td>' . $rows['Componentes'] . '</td>
-						
-						<td>
-							<a href="' . APP_URL . 'odsUpdate/' . $rows['Idods'] . '/" class="button is-success is-rounded is-small">
-								<i class="fas fa-sync fa-fw"></i>
-							</a>
-						</td>
-						<td>
-							<form class="FormularioAjax" action="' . APP_URL . 'app/ajax/categoriaAjax.php" method="POST" autocomplete="off" >
-
-								<input type="hidden" name="modulo_ods" value="eliminar">
-								<input type="hidden" name="Idods" value="' . $rows['Idods'] . '">
-
-								<button type="submit" class="button is-danger is-rounded is-small">
-									<i class="far fa-trash-alt fa-fw"></i>
-								</button>
-							</form>
-						</td>
 					</tr>
 				';
 				$contador++;
@@ -1340,32 +1154,367 @@ $Costorep = implode(', ', $costorep_items);
 			$pag_final = $contador - 1;
 		} else {
 			if ($total >= 1) {
-				$tabla .= '
-					<tr class="has-text-centered" >
-						<td colspan="6">
-							<a href="' . $url . '1/" class="button is-link is-rounded is-small mt-4 mb-4">
-								Haga clic acá para recargar el listado
-							</a>
-						</td>
-					</tr>
-				';
+				$tabla .= '<tr class="has-text-centered"><td colspan="14"><a href="' . $url . '1/" class="button is-link is-rounded is-small mt-4 mb-4">Recargar listado</a></td></tr>';
 			} else {
-				$tabla .= '
-					<tr class="has-text-centered" >
-						<td colspan="6">
-							No hay registros en el sistema
-						</td>
-					</tr>
-				';
+				$tabla .= '<tr class="has-text-centered"><td colspan="14"><div class="has-text-grey p-4"><i class="fas fa-folder-open fa-2x mb-2"></i><br>No se encontraron órdenes con este filtro.</div></td></tr>';
 			}
 		}
 		$tabla .= '</tbody></table></div>';
-		### Paginacion ###
+		
 		if ($total > 0 && $pagina <= $numeroPaginas) {
 			$tabla .= '<p class="has-text-right">Mostrando ODS <strong>' . $pag_inicio . '</strong> al <strong>' . $pag_final . '</strong> de un <strong>total de ' . $total . '</strong></p>';
-
 			$tabla .= $this->paginadorTablas($pagina, $numeroPaginas, $url, 7);
 		}
 		return $tabla;
 	}
+
+	/*----------  Controlador listar ODS Personal (HISTORIAL COMPLETO PARA MIS ODS)  ----------*/
+		public function listarOdsGeneralMeControlador($pagina, $registros, $url, $busqueda, $filtroEstado = "") {
+		
+		$pagina = $this->limpiarCadena($pagina);
+		$registros = $this->limpiarCadena($registros);
+		$url = $this->limpiarCadena($url);
+		$url = APP_URL . $url . "/";
+		$busqueda = $this->limpiarCadena($busqueda);
+		$filtroEstado = $this->limpiarCadena($filtroEstado);
+		$tabla = "";
+
+		$pagina = (isset($pagina) && $pagina > 0) ? (int) $pagina : 1;
+		$inicio = (isset($pagina) && $pagina > 0) ? (($pagina * $registros) - $registros) : 0;
+		
+		// --- DATOS DE SESIÓN ---
+		$idUser = $_SESSION['id'] ?? 0;
+		$puestoUser = $_SESSION['Puesto'] ?? ''; 
+
+		// --- DEFINIR OPCIONES DE ESTATUS SEGÚN ROL ---
+		// Clave = Valor en BD, Valor = Texto a mostrar
+		$opcionesTecnico = [
+			'Recepcion'    => 'Recepción',
+			'Diagnostico'  => 'Diagnóstico',
+			'Presupuesto'  => 'Presupuesto',
+			'Autorizacion' => 'Autorización',
+			'Reparacion'   => 'Reparación',
+			'Refacciones'  => 'Refacciones',
+			'StandBy'      => 'StandBy',
+			'Almacen'      => 'Almacén',
+			'Listoe'       => 'Listo para Entregar',
+			'Entregado'    => 'Entregado'
+		];
+
+		$opcionesAsesor = [
+			'Recepcion'    => 'Recepción',
+			'Diagnostico'  => 'Diagnóstico',
+			'Presupuesto'  => 'Presupuesto',
+			'Autorizacion' => 'Autorización',
+			'Reparacion'   => 'Reparación',
+			'Refacciones'  => 'Refacciones',
+			'StandBy'      => 'StandBy',
+			'Almacen'      => 'Almacén',
+			'Listoe'       => 'Listo para Entregar',
+			'Entregado'    => 'Entregado',
+			'Seguimiento'  => 'Seguimiento',
+			'Cancelado'    => 'Cancelado'
+		];
+
+		// Seleccionamos la lista correcta
+		$misOpciones = ($puestoUser == 'TECNICO') ? $opcionesTecnico : $opcionesAsesor;
+
+		// --- FILTROS INTELIGENTES ---
+		$condicionUsuario = " AND (o.IdTecnico = '$idUser' OR o.Idasesor = '$idUser') ";
+
+		$condicionStatus = "";
+		if($filtroEstado != "" && $filtroEstado != "Todos"){
+			$condicionStatus = " AND o.Status = '$filtroEstado' ";
+		}
+
+		// --- CONSULTAS SQL ---
+		if (isset($busqueda) && $busqueda != "") {
+			$consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
+							FROM ods o
+							LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+							LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+							LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+							WHERE (o.Idods LIKE '%$busqueda%' OR c.Nombre LIKE '%$busqueda%') 
+							$condicionUsuario $condicionStatus
+							ORDER BY o.Idods DESC LIMIT $inicio,$registros";
+
+			$consulta_total = "SELECT COUNT(o.Idods) FROM ods o 
+							LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+							WHERE (o.Idods LIKE '%$busqueda%' OR c.Nombre LIKE '%$busqueda%') 
+							$condicionUsuario $condicionStatus";
+		} else {
+			$consulta_datos = "SELECT o.*, c.Nombre AS cliente_nombre, p.Nombre AS asesor_nombre, p2.Nombre AS tecnico_nombre
+							FROM ods o
+							LEFT JOIN clientes c ON o.Idcliente = c.Idcliente
+							LEFT JOIN personal p ON o.Idasesor  = p.Idasesor
+							LEFT JOIN personal p2 ON o.IdTecnico  = p2.Idasesor
+							WHERE 1=1 $condicionUsuario $condicionStatus
+							ORDER BY o.Idods DESC LIMIT $inicio,$registros";
+
+			$consulta_total = "SELECT COUNT(o.Idods) FROM ods o WHERE 1=1 $condicionUsuario $condicionStatus";
+		}
+
+		$datos = $this->ejecutarConsulta($consulta_datos);
+		$datos = $datos->fetchAll();
+		$total = $this->ejecutarConsulta($consulta_total);
+		$total = (int) $total->fetchColumn();
+		$numeroPaginas = ceil($total / $registros);
+		
+		// --- ESTILOS CSS ---
+		$tabla.='
+		<style>
+			.btn-view-ods { background-color: #3b5998; color: white; border: none; width: 100%; border-radius: 4px; display: block; text-align: center; margin-top: 5px; padding: 2px 0; text-decoration: none; transition: background 0.2s; }
+			.btn-view-ods:hover { background-color: #2d4373; color: white; }
+
+			.estado-recepcion   { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important; color: white !important; }
+			.estado-diagnostico { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important; color: white !important; }
+			.estado-presupuesto { background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%) !important; color: white !important; }
+			.estado-autorizacion{ background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important; color: white !important; }
+			.estado-standby     { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important; color: white !important; }
+			.estado-reparacion  { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: white !important; }
+			.estado-refacciones { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; color: white !important; }
+			.estado-listoe      { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: white !important; }
+			.estado-almacen     { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important; color: white !important; }
+			.estado-entregado   { background: linear-gradient(135deg, #facc15 0%, #eab308 100%) !important; color: #444 !important; }
+			.estado-seguimiento { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; color: white !important; }
+			.estado-cancelado   { background: linear-gradient(135deg, #6b7280 0%, #374151 100%) !important; color: white !important; }
+			
+			select.status-dropdown { width: 135px !important; height: 30px !important; font-weight: 600; font-size: 0.85rem !important; padding-left: 10px; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+			select.status-dropdown option { background-color: white; color: #333; font-weight: normal; }
+			.select.is-rounded { height: 30px !important; width: auto !important; }
+
+			.badge-tiempo { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 12px; white-space: nowrap; display: inline-block; width: 100%; }
+			.tiempo-verde { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+			.tiempo-amarillo { background-color: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+			.tiempo-rojo { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+			.tiempo-finalizado { background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+		</style>
+
+		<div class="table-container">
+			<table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth" style="font-family: \'Segoe UI\', system-ui, sans-serif; font-size: 0.95rem;">
+				<thead>
+					<tr style="background-color: #f9fafb; color: #6b7280; text-transform: uppercase; font-size: 0.85rem;">';
+		
+		// CABECERA
+		if($puestoUser == 'TECNICO') {
+			$tabla .= '
+						<th class="has-text-centered">ODS</th>
+						<th class="has-text-centered">Cliente</th>
+						<th class="has-text-centered">Asesor</th>
+						<th class="has-text-centered">Status</th>
+						<th class="has-text-centered">Antigüedad</th>
+						<th class="has-text-centered">Tipo</th>
+						<th class="has-text-centered">Marca</th>
+						<th class="has-text-centered">Fecha Ingreso</th>';
+		} else {
+			$tabla .= '
+						<th class="has-text-centered">ODS</th>
+						<th class="has-text-centered">Cliente</th>
+						<th class="has-text-centered">Tecnico</th>
+						<th class="has-text-centered">Status</th>
+						<th class="has-text-centered">Antigüedad</th>
+						<th class="has-text-centered">Total</th>
+						<th class="has-text-centered">Resto</th>
+						<th class="has-text-centered">Fecha Entrega</th>';
+		}
+
+		$tabla .= ' </tr>
+				</thead>
+				<tbody>';
+
+		if ($total >= 1 && $pagina <= $numeroPaginas) {
+			$contador = $inicio + 1;
+			$pag_inicio = $inicio + 1;
+			
+			foreach ($datos as $rows) {
+				$st = mb_strtoupper($rows['Status'], 'UTF-8');
+				$claseColor = '';
+				if(strpos($st, "RECEPC") !== false) $claseColor = 'estado-recepcion';
+				elseif(strpos($st, "DIAGN") !== false) $claseColor = 'estado-diagnostico';
+				elseif(strpos($st, "PRESUP") !== false) $claseColor = 'estado-presupuesto';
+				elseif(strpos($st, "AUTORIZ")!== false)$claseColor = 'estado-autorizacion';
+				elseif(strpos($st, "REPARA") !== false)  $claseColor = 'estado-reparacion';
+				elseif(strpos($st, "REFACC") !== false) $claseColor = 'estado-refacciones';
+				elseif(strpos($st, "STAND")  !== false) $claseColor = 'estado-standby';
+				elseif(strpos($st, "ALMAC")  !== false) $claseColor = 'estado-almacen';
+				elseif(strpos($st, "LIST")   !== false) $claseColor = 'estado-listoe';
+				elseif(strpos($st, "ENTREG") !== false) $claseColor = 'estado-entregado';
+				elseif(strpos($st, "SEGUIM") !== false) $claseColor = 'estado-seguimiento';
+				elseif(strpos($st, "CANCEL") !== false) $claseColor = 'estado-cancelado';
+
+				// Antigüedad
+				$textoTiempo = ""; $claseTiempo = "";
+				if ($rows['Fechaentrega'] != "" && $rows['Fechaentrega'] != "0000-00-00" && $rows['Fechaentrega'] != NULL) {
+					$textoTiempo = '<i class="fas fa-check"></i> Entregado'; $claseTiempo = "tiempo-finalizado";
+				} else {
+					$fechaIngreso = new \DateTime($rows['Fecha']);
+					$fechaHoy     = new \DateTime();
+					$diferencia   = $fechaIngreso->diff($fechaHoy);
+					$dias = $diferencia->days;
+					if ($dias <= 7) { $textoTiempo = $dias . " días"; $claseTiempo = "tiempo-verde"; } 
+					elseif ($dias <= 30) { $textoTiempo = floor($dias / 7) . " sem"; $claseTiempo = "tiempo-amarillo"; } 
+					else { $textoTiempo = floor($dias / 30) . " mes"; $claseTiempo = "tiempo-rojo"; }
+				}
+
+				// Datos comunes
+				$celdaODS = '<td>
+								<div style="font-weight: bold; font-size: 1.1em; color: #1d4d80; margin-bottom: 5px;">' . $rows['Idods'] . '</div>
+								<a href="' . APP_URL . 'odsView/' . $rows['Idods'] . '/" target="_blank" class="button is-small btn-view-ods" title="Ver ODS">
+									<i class="fas fa-eye"></i>
+								</a>
+							</td>';
+				
+				// --- CONSTRUCCIÓN DEL SELECT DINÁMICO ---
+				$selectHTML = '<div class="select is-rounded">
+									<select name="Status" class="status-dropdown '.$claseColor.'" 
+											onchange="actualizarStatusDirecto('.$rows['Idods'].', this.value)">';
+				
+				// 1. Verificamos si el estado actual está en la lista permitida.
+				// Si NO está (ej: Tecnico ve una en RECEPCION), lo agregamos visualmente para que no se rompa.
+				$statusActualEncontrado = false;
+				foreach ($misOpciones as $val => $texto) {
+					// Compara el valor actual mayúscula (BD) con el valor de la lista (convertido a mayúscula para asegurar)
+					if (strtoupper($val) == $st || (strtoupper($val) == 'LISTOE' && $st == 'LENTREGAR')) {
+						$statusActualEncontrado = true;
+					}
+				}
+
+				// Si no estaba en la lista, lo imprimimos primero como "Actual"
+				if (!$statusActualEncontrado) {
+					$selectHTML .= '<option value="'.$rows['Status'].'" selected>'.$rows['Status'].'</option>';
+				}
+
+				// 2. Imprimimos las opciones permitidas
+				foreach ($misOpciones as $val => $texto) {
+					// Lógica de selección
+					$selected = (strtoupper($val) == $st || (strtoupper($val) == 'LISTOE' && $st == 'LENTREGAR')) ? 'selected' : '';
+					$selectHTML .= '<option value="'.$val.'" '.$selected.'>'.$texto.'</option>';
+				}
+
+				$selectHTML .= '    </select>
+								</div>';
+				
+				$celdaStatus = '<td>' . $selectHTML . '</td>';
+				$celdaTiempo = '<td><div class="badge-tiempo '.$claseTiempo.'"><i class="far fa-clock"></i> '.$textoTiempo.'</div></td>';
+
+				// --- FILAS DINÁMICAS ---
+				$tabla .= '<tr class="has-text-centered">';
+				
+				if($puestoUser == 'TECNICO') {
+					$tabla .= $celdaODS;
+					$tabla .= '<td>' . $rows['cliente_nombre'] . '</td>';
+					$tabla .= '<td>' . $rows['asesor_nombre'] . '</td>';
+					$tabla .= $celdaStatus;
+					$tabla .= $celdaTiempo;
+					$tabla .= '<td>' . $rows['Tipo'] . '</td>';
+					$tabla .= '<td>' . $rows['Marca'] . '</td>';
+					$tabla .= '<td>' . $rows['Fecha'] . '</td>';
+				} else {
+					$resto = $rows['Total'] - $rows['Cuenta'];
+					$tabla .= $celdaODS;
+					$tabla .= '<td>' . $rows['cliente_nombre'] . '</td>';
+					$tabla .= '<td>' . $rows['tecnico_nombre'] . '</td>';
+					$tabla .= $celdaStatus;
+					$tabla .= $celdaTiempo;
+					$tabla .= '<td style="font-weight:bold; color:#1d4d80;">$' . number_format($rows['Total'], 2) . '</td>';
+					$tabla .= '<td style="color:#ef4444;">$' . number_format($resto, 2) . '</td>';
+					$tabla .= '<td>' . ($rows['Fechaentrega'] == '0000-00-00' ? '-' : $rows['Fechaentrega']) . '</td>';
+				}
+
+				$tabla .= '</tr>';
+				$contador++;
+			}
+			$pag_final = $contador - 1;
+		} else {
+			$tabla .= '<tr class="has-text-centered"><td colspan="8"><div class="has-text-grey p-4">No se encontraron registros.</div></td></tr>';
+		}
+		$tabla .= '</tbody></table></div>';
+		
+		if ($total > 0 && $pagina <= $numeroPaginas) {
+			$tabla .= '<p class="has-text-right">Mostrando ODS <strong>' . $pag_inicio . '</strong> al <strong>' . $pag_final . '</strong> de un <strong>total de ' . $total . '</strong></p>';
+			$tabla .= $this->paginadorTablas($pagina, $numeroPaginas, $url, 7);
+		}
+		return $tabla;
+	}
+
+	/* 1. ESTADÍSTICAS (Funciona para Asesor y Técnico) */
+    public function obtenerEstadisticasPersonal($idUsuario) {
+        $idUsuario = $this->limpiarCadena($idUsuario);
+        
+        // Busca ODS donde el usuario sea el Técnico O el Asesor
+        $consulta = "SELECT Status, COUNT(Idods) as Cantidad 
+                     FROM ods 
+                     WHERE (IdTecnico = '$idUsuario' OR Idasesor = '$idUsuario') 
+                     GROUP BY Status";
+                    
+        $datos = $this->ejecutarConsulta($consulta);
+        return $datos->fetchAll();
+    }
+
+	public function actualizar_tecnico_controlador() {
+		// 1. Limpiar datos
+		$id = $this->limpiarCadena($_POST['id_ods']);
+		$tecnico = $this->limpiarCadena($_POST['id_tecnico']);
+
+		if($id == "") {
+			return json_encode(["success" => false, "msg" => "Error: ID no encontrado"]);
+		}
+
+		try {
+			// SQL DIRECTO
+			$pdo = mainModel::conectar();
+			$sql = $pdo->prepare("UPDATE ods SET IdTecnico=:Tecnico WHERE Idods=:ID");
+			
+			$sql->bindParam(":Tecnico", $tecnico);
+			$sql->bindParam(":ID", $id);
+			
+			if($sql->execute()){
+				$alerta = ["success" => true, "msg" => "Técnico asignado correctamente"];
+			} else {
+				$alerta = ["success" => false, "msg" => "No se pudo actualizar la BD"];
+			}
+			$sql = null; $pdo = null;
+
+		} catch (\Exception $e) { // <--- IMPORTANTE: La barra invertida '\' aquí
+			$alerta = ["success" => false, "msg" => "Error: " . $e->getMessage()];
+		}
+
+		return json_encode($alerta);
+	}
+	}
+?>
+
+<script>
+function actualizarStatusDirecto(idOds, nuevoStatus) {
+    // 1. Preparamos los datos para enviar a odsAjax.php
+    let data = new FormData();
+    data.append('modulo_ods', 'cambiar_status'); // Este módulo llama a cambiarStatusOdsControlador
+    data.append('Idods', idOds);
+    data.append('Status', nuevoStatus);
+
+    // 2. Enviamos la petición sin recargar la página
+    fetch('<?php echo APP_URL; ?>app/ajax/odsAjax.php', {
+        method: 'POST',
+        body: data
+    })
+    .then(response => response.json())
+    .then(respuesta => {
+        if(respuesta.success) {
+            // ÉXITO: Mostramos alerta bonita o toast
+            alert("✅ Estado actualizado a: " + nuevoStatus);
+            // Opcional: Recargar para ver cambios de color si no usas lógica dinámica
+            // location.reload(); 
+        } else {
+            // ERROR: Avisamos al usuario
+            alert("❌ Error: " + respuesta.msg);
+            // Recargamos para devolver el select a su estado real
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Error de conexión al guardar.");
+    });
 }
+</script>
+	
