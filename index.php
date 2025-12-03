@@ -1,29 +1,26 @@
 <?php
-
     require_once "./config/app.php";
     require_once "./autoload.php";
-
-    /*---------- Iniciando sesion ----------*/
     require_once "./app/views/inc/session_start.php";
 
     use app\controllers\loginController;
-
     $insLogin = new loginController();
-
-        if(isset($_POST['login_usuario']) && isset($_POST['login_clave'])){
-            if(isset($_POST['login_almacen'])){
-                $insLogin->iniciarSesionControlador('usuarios');
-            } else {
-                $insLogin->iniciarSesionControlador('personal');
-            }
-            exit;
+    // DETECTAR TIPO DE LOGIN
+    if(isset($_POST['login_clave'])){
+        // Si viene el campo 'login_almacen', es LOGIN DE CAJA
+        if(isset($_POST['login_almacen'])){
+            $insLogin->iniciarSesionCaja(); 
+        } 
+        // Si viene 'login_usuario', es LOGIN DE PERSONAL
+        elseif(isset($_POST['login_usuario'])) {
+            $insLogin->iniciarSesionPersonal();
         }
-        if(isset($_GET['views'])){
-            $url=explode("/", $_GET['views']);
-        }else{
-            $url=["login"];
-        }
-
+    }
+    if(isset($_GET['views'])){
+        $url=explode("/", $_GET['views']);
+    }else{
+        $url=["login"];
+    }
 ?>
 
 <!DOCTYPE html>
@@ -34,13 +31,9 @@
 <body>
     <?php
         use app\controllers\viewsController;
-      
-
         $insLogin = new loginController();
-
         $viewsController= new viewsController();
         $vista=$viewsController->obtenerVistasControlador($url[0]);
-
         if($vista=="login" || $vista=="404"){
             require_once "./app/views/content/".$vista."-view.php";
         }else{
