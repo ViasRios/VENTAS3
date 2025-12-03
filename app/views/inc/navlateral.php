@@ -67,12 +67,12 @@
                     </ul>
                 </li>
 
-                <?php if($_SESSION['Puesto'] == 'TECNICO' || $_SESSION['Puesto'] == 'JEFE DE PRODUCCION' || $_SESSION['Puesto'] == 'JEFE_DE_PRODUCCION'): ?>  
+                <?php if($_SESSION['Puesto'] == 'JEFE DE PRODUCCION' || $_SESSION['Puesto'] == 'JEFE_DE_PRODUCCION'): ?>  
                 <li class="full-width divider-bold"></li>
                 <li class="full-width">
                     <a href="#" class="full-width btn-subMenu btn-bold">
                         <div class="navLateral-body-cl"><i class="fas fa-users fa-fw"></i></div>
-                        <div class="navLateral-body-cr">USUARIOS</div>
+                        <div class="navLateral-body-cr">PERSONAL</div>
                         <span class="fas fa-chevron-down icon-arrow"></span>
                     </a>
                     <ul class="full-width menu-principal sub-menu-options">
@@ -82,7 +82,8 @@
                     </ul>
                 </li>
                 <?php endif; ?>
-
+                
+                
                 <li class="full-width divider-bold"></li>
                 <li class="full-width">
                     <a href="#" class="full-width btn-subMenu btn-bold">
