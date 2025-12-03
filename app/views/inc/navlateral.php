@@ -129,7 +129,7 @@
                 </li>
                 <li class="full-width divider-bold"></li>
                 <li class="full-width">
-                    <a href="<?php echo APP_URL; ?>loginAlmacen/" class="full-width btn-bold">
+                    <a href="http://localhost/sistema_inventario/" target="_blank" class="full-width btn-bold">
                         <div class="navLateral-body-cl"><i class="fas fa-boxes"></i></div>
                         <div class="navLateral-body-cr">REFACCIONES</div>
                     </a>
