@@ -1,10 +1,9 @@
 <div class="container is-fluid mb-1">
     <h1 class="title">ODS</h1>
-    <h2 class="subtitle"><i class="fas fa-clipboard-list fa-fw"></i> &nbsp; Lista de ODS</h2>
 </div>
 
-<div class="container pb-1 pt-1">
-    <div class="form-rest mb-1 mt-1"></div>
+<div class="container pb-0 pt-10">
+    <div class="form-rest mb-1 mt-14"></div>
     <!-- Contenedor con scroll horizontal -->
     <div style="overflow-x: auto; max-width: 100%;">
         <table class="table is-bordered is-striped is-narrow is-hoverable">
