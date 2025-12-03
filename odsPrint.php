@@ -1,13 +1,10 @@
 <?php
-
 declare(strict_types=1);
 require_once __DIR__ . '/app/models/mainModel.php';
 
 use app\models\mainModel;
-
 $id   = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $auto = isset($_GET['auto']) && $_GET['auto'] == '1';
-
 $pdo = mainModel::conectar();
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
@@ -45,8 +42,6 @@ if (!$ods) {
   echo "<p>ODS no encontrada.</p>";
   exit;
 }
-
-// === detalle ===
 $q = $pdo->prepare("SELECT * FROM ods WHERE Idods = :id ORDER BY Idods ASC");
 $q->execute([':id'=>$id]);
 $det = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -66,7 +61,6 @@ $descuento = 0.0;
 $total = $subtotal + $iva - $descuento;
 ?>
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -76,26 +70,26 @@ $total = $subtotal + $iva - $descuento;
 /* ====== MODO PANTALLA (compacto) ====== */
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif}
 :root{
-  --fs-base:11px;      /* fuente base compacta */
-  --fs-small:10px;
-  --fs-title:14px;
-  --gap:10px;
-  --pad:8px;
+  --fs-base:14px;      /* Base legible estándar */
+  --fs-small:11px;
+  --fs-title:20px;     /* Título más grande */
+  --gap:5px;           /* Reducido para que quepa todo (antes 10px) */
+  --pad:5px;
 }
-body{background:#f5f7f9;color:#333;padding:10px;display:flex;justify-content:center;font-size:var(--fs-base)}
+body{background:#f5f7f9;color:#000;padding:10px;display:flex;justify-content:center;font-size:var(--fs-base)}
 .container{
   width:210mm;                 /* A4 ancho */
   max-width:210mm;
   background:#fff;
   box-shadow:0 0 8px rgba(0,0,0,.08);
-  padding:8mm 10mm;            /* márgenes internos compactos */
+  padding:5mm 8mm;             /* Márgenes internos reducidos para ganar espacio */
 }
 .logo {
   flex:1;
   text-align:right;
 }
 .logo img {
-  max-height:80px;   /* ajusta el alto del logo */
+  max-height:92px;   /* ajusta el alto del logo */
   width:auto;
   object-fit:contain;
 }
@@ -103,67 +97,81 @@ body{background:#f5f7f9;color:#333;padding:10px;display:flex;justify-content:cen
 .header {
   background: linear-gradient(to right,#0d476a,#1887cb);
   color:#fff;
-  padding:10px;
-  margin-bottom:15px;
+  padding:8px;        /* Padding reducido */
+  margin-bottom:10px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 .company-info { flex:2; }
 
-.company-info h2{font-size:13px;margin-bottom:4px}
-.company-info p{font-size:var(--fs-small);margin:2px 0}
+.company-info h2{font-size:19px;margin-bottom:4px; font-weight:1000;}
+.company-info p{font-size:var(--fs-small);margin:1px 0}
 
 .document-title{
   background:#1887cb;color:#fff;text-align:center;
-  padding:8px;font-size:var(--fs-title);font-weight:700;margin:10px 0
+  padding:6px;font-size:var(--fs-title);font-weight:700;margin:8px 0;
+  border-radius: 4px;
 }
-.order-number{font-size:var(--fs-title)}
+.order-number{font-size:24px}
 .section{margin-bottom:var(--gap);page-break-inside:avoid}
 .section-title{
-  background:#0d476a;color:#fff;padding:6px 8px;margin-bottom:6px;
-  border-radius:3px;font-weight:700;font-size:11px
+  background:#0d476a;color:#fff;padding:5px 8px;margin-bottom:4px;
+  border-radius:3px;font-weight:700;font-size:13px /* Aumentado de 11 a 13 */
 }
 
-/* Tablas súper compactas */
-table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:10.5px;table-layout:fixed}
-th{background:#e8f4ff;color:#0d476a;padding:6px;border-bottom:2px solid #1887cb}
-td{padding:6px;border-bottom:1px solid #ddd;vertical-align:top;word-wrap:break-word}
+/* Tablas optimizadas: Letra GRANDE, pero celdas compactas */
+table{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:12.5px;table-layout:fixed} /* Aumentado de 10.5 a 12.5 */
+th{background:#e8f4ff;color:#0d476a;padding:4px;border-bottom:2px solid #1887cb} /* Padding bajado de 6 a 4 */
+td{padding:4px;border-bottom:1px solid #ddd;vertical-align:top;word-wrap:break-word; color:#000;}
 tr:nth-child(even){background:#fafafa}
 
-/* Campos multilínea: mejor <div> que <textarea> para impresión;
-   si mantienes <textarea>, los hacemos compactos */
+/* Campos multilínea */
 textarea{
-  width:100%;padding:6px;border:1px solid #ddd;border-radius:3px;
-  resize:vertical;min-height:48px;font-size:10.5px
+  width:100%;padding:4px;border:1px solid #999;border-radius:3px;
+  resize:none;min-height:42px;font-size:12.5px; color:#000; font-family:inherit;
 }
 
 /* Totales compactos */
 .totals{
-  background:#e8f4ff;padding:8px;border-radius:4px;border-left:4px solid #1887cb;
-  margin:10px 0;font-size:11px
+  background:#e8f4ff;padding:6px;border-radius:4px;border-left:4px solid #1887cb;
+  margin:8px 0;font-size:12.5px
 }
-.total-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #ddd}
-.grand-total{font-weight:700;font-size:14px;color:#0d476a;border-bottom:none;margin-top:4px}
+.total-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #ccc}
+.grand-total{font-weight:700;font-size:16px;color:#0d476a;border-bottom:none;margin-top:4px}
 
 /* Firmas */
 .signature-area{
-  display:flex;gap:10mm;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:2px dashed #ddd;font-size:10.5px
+  display:flex;gap:10mm;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:2px dashed #999;font-size:12px
 }
-.signature-box{flex:1}
-.stamp-box{height:70px;border:2px dashed #999;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-top:8px;font-style:italic;color:#777;font-size:10px}
-.signature-line{height:1px;background:#333;margin:18px 0 5px}
+.signature-box{flex:1; text-align:center;}
+.signature-line{height:1px;background:#000;margin:25px 0 5px}
 
+/* === CAMBIO AQUI: Sello Circular === */
+.stamp-box{
+  width: 130px;           /* Ancho fijo */
+  height: 130px;          /* Alto igual al ancho para que sea círculo */
+  border-radius: 50%;    /* Borde redondeado al 50% */
+  border:2px dashed #999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:4px auto;       /* auto centra el circulo horizontalmente */
+  font-style:italic;
+  color:#777;
+  font-size:10px;
+  text-align: center;
+}
 /* Footer */
-.footer{background:#0d476a;color:#fff;text-align:center;padding:8px;font-size:9.5px;margin-top:12px}
+.footer{background:#0d476a;color:#fff;text-align:center;padding:5px;font-size:10px;margin-top:10px}
 
-.btn-print{background:#1887cb;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:700;margin-top:12px;width:100%;font-size:12px}
+.btn-print{background:#1887cb;color:#fff;border:none;padding:10px 15px;border-radius:4px;cursor:pointer;font-weight:700;margin-top:10px;width:100%;font-size:14px}
 .btn-print:hover{background:#0d476a}
 
 /* ====== MODO IMPRESIÓN A4 ====== */
 @page{
   size: A4 portrait;
-  margin: 10mm;               /* margen de hoja */
+  margin: 5mm;               /* Margen reducido (era 9mm) para aprovechar hoja */
 }
 @media print{
   html,body{width:210mm;height:297mm;background:#fff}
@@ -173,10 +181,10 @@ textarea{
   }
   /* Forzar cortes limpios y evitar desbordes */
   .section, table, tr{page-break-inside:avoid; break-inside:avoid}
-  .document-title{margin:6mm 0 4mm}
+  .document-title{margin:4mm 0 4mm}
   /* Textareas: que impriman todo el contenido */
   textarea{
-    display:block; height:auto !important; overflow:visible; border:1px solid #ccc;
+    display:block; height:auto !important; overflow:visible; border:none; padding:0;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
   }
   .btn-print{display:none}
@@ -197,7 +205,6 @@ textarea{
       <p>Tel: 771-402-02-58 | info@kascom.com</p>
       <p>Lunes-Viernes: 10:00-19:00 || Sábado: 10:00-17:00</p>
     </div>
-
     <div class="logo">
     <img src="/VENTAS3/foto_ods/Kascom.jpg" alt="Logo KASCOM">
   </div>
@@ -214,17 +221,16 @@ textarea{
       <tr>
         <th style="width:25%; text-align:left;">Cliente</th>
         <th style="width:25%; text-align:left;">Correo</th>
-        
         <th style="width:25%; text-align:center;">Fecha de Ingreso</th>
         <th style="width:25%; text-align:center;">Garantía</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td style="text-align:left;"><?= h($ods['NombreCliente']) ?></td>
+        <td style="text-align:left; font-weight:bold;"><?= h($ods['NombreCliente']) ?></td>
         <td style="text-align:left;"><?= h($ods['EmailCliente']) ?></td>
         <td style="text-align:center;"><?= h(ffecha($ods['Fecha'])) ?></td>
-        <td style="text-align:center;"><?= (int)$ods['Garantia']===1?'Sí':'No' ?></td>
+        <td style="text-align:center; font-weight:bold;"><?= (int)$ods['Garantia']===1?'Sí':'No' ?></td>
       </tr>
     </tbody>
   </table>
@@ -242,7 +248,7 @@ textarea{
     <tbody>
       <tr>
         <td style="text-align:left;"><?= h($ods['Tipo']) ?></td>
-        <td style="text-align:left;"><?= h($ods['Marca'].' / '.$ods['Modelo']) ?></td>
+        <td style="text-align:left; font-weight:bold;"><?= h($ods['Marca'].' / '.$ods['Modelo']) ?></td>
         <td style="text-align:center;"><?= h($ods['Color']) ?></td>
         <td style="text-align:center;"><?= h($ods['Noserie']) ?></td>
       </tr>
@@ -257,19 +263,17 @@ textarea{
     </thead>
     <tbody>
       <tr>
-        <td style="text-align:left;"><?= h($ods['Contrasena']) ?></td>
+        <td style="text-align:left; font-weight:bold;"><?= h($ods['Contrasena']) ?></td>
         <td style="text-align:left;"><?= h($ods['Accesorios']) ?></td>
       </tr>
     </tbody>
   </table>
 </div>
 
-
   <div class="section">
     <div class="section-title">🔍 Descripción del Problema</div>
     <textarea readonly><?= h($ods['Problema']) ?></textarea>
   </div>
-
 
     <div class="section">
     <div class="section-title">⏱️ Servicios Realizados</div>
@@ -297,7 +301,6 @@ textarea{
   </table>
   </div>
 
-
   <div class="totals">
     <div class="total-row"><span>Subtotal:</span><span><?= money($subtotal) ?></span></div>
     <div class="total-row"><span>IVA (16%):</span><span><?= money($iva) ?></span></div>
@@ -321,6 +324,7 @@ textarea{
       <br>
       <p><strong>Recibí Conforme</strong></p>
       <p><strong>Fecha de Entrega:</strong> </p>
+      <br><br>
       <br><br><br>
       <div class="signature-line"></div>
       <p>Firma del Cliente</p>
@@ -329,7 +333,7 @@ textarea{
 
   <?php if(!$auto): ?><button class="btn-print" onclick="window.print()">Imprimir</button><?php endif; ?>
   <div class="footer">
-    <p>KASCOM - Powered by Casa de la Computación 2025</p>
+    <p>KASCOM - Powered by Casa de la Computación</p>
   </div>
 </div>
 </body>
