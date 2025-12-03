@@ -53,8 +53,12 @@ class searchController extends mainModel{
             
             $param_busqueda = "%".$texto."%";
             
-            // Usamos $this->conectar() para obtener la conexión PDO
             $pdo = $this->conectar();
+            
+            /* NOTA: Asegúrate de que 'Nombre' es exactamente como se llama 
+               la columna en tu tabla 'clientes'. Si se llama 'nombre_completo' 
+               o 'razon_social', cámbialo aquí.
+            */
             $sql = $pdo->prepare("SELECT 
                         ods.Idods 
                     FROM 
@@ -62,20 +66,21 @@ class searchController extends mainModel{
                     INNER JOIN 
                         clientes ON ods.Idcliente = clientes.Idcliente
                     WHERE 
-                        ods.Idods LIKE :busqueda OR clientes.Idcliente LIKE :busqueda OR clientes.Nombre LIKE :busqueda");
+                        ods.Idods LIKE :busqueda 
+                        OR clientes.Nombre LIKE :busqueda");
             
             $sql->bindParam(":busqueda", $param_busqueda);
             $sql->execute();
             $resultados = $sql->fetchAll(\PDO::FETCH_ASSOC);
             $numero_de_resultados = count($resultados);
 
-            // Decide a dónde redirigir
+            // Lógica de redirección
             if ($numero_de_resultados === 1) {
-                // 1 resultado: va directo a la odsView
+                // Si solo hay 1 coincidencia, vamos directo al detalle
                 $id_ods_unico = $resultados[0]['Idods'];
                 $url_destino = APP_URL . 'odsView/' . $id_ods_unico . '/';
             } else {
-                // 0 o varios resultados: va a la lista de búsqueda
+                // Si hay 0 o muchos, vamos a la lista de resultados
                 $url_destino = APP_URL . 'odsSearch' . '/';
             }
 
